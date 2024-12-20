@@ -1,0 +1,25 @@
+{
+  "name": "Python Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/python:3.9", // Use the desired Python version
+  "features": {
+    "ghcr.io/devcontainers/features/pyright:1": {},
+    "ghcr.io/devcontainers/features/black:1": {},
+    "ghcr.io/devcontainers-extra/features/ruff:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python", // Python extension for VS Code
+        "ms-python.vscode-pylance", // Pylance for enhanced Python support
+        "ms-vscode.vscode-typescript-next", // Provides TypeScript support, which Pyright depends on
+        "vscodevim.vim" // Vim keybindings extension
+      ],
+      "settings": {
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "vim.useSystemClipboard": true // Example Vim setting; customize as needed
+      }
+    }
+  },
+  "remoteUser": "vscode" // Ensures the container runs as the 'vscode' user
+}
