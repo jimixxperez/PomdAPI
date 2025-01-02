@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Generic, Optional, Protocol, Required, TypeVar, TypedDict
 
 TResponse = TypeVar('TResponse')
-EndpointDefinitionGen = TypeVar("EndpointDefinitionGen", covariant=True)
+EndpointDefinitionGen = TypeVar("EndpointDefinitionGen")
 
 @dataclass
 class BaseQueryConfig:
@@ -10,12 +10,6 @@ class BaseQueryConfig:
     base_url: Optional[str] = None
     prepare_headers: Callable[[dict[str, str]], dict[str, str]] = field(default_factory=lambda: lambda header: header)
 
-class RequestDefinition(TypedDict, total=False):
-    """Defines a request for the API."""
-    method: Required[str]
-    url: Required[str]
-    body: Optional[Any]
-    headers: Optional[dict[str, str]]
 
 @dataclass
 class EndpointDefinition(Generic[EndpointDefinitionGen]):
@@ -41,12 +35,12 @@ class CacheEntry(Generic[TResponse]):
     tags: list[str]
     timestamp: float
 
-class CachingStrategy(Protocol[TResponse]):
+class CachingStrategy(Protocol[EndpointDefinitionGen, TResponse]):
     """Defines a caching strategy for the API."""
-    def get(self, endpoint_name: str, request: RequestDefinition) -> Optional[TResponse]:
+    def get(self, endpoint_name: str, request: EndpointDefinitionGen) -> Optional[TResponse]:
         raise NotImplementedError
 
-    def set(self, endpoint_name: str, request: RequestDefinition, response: TResponse, tags: list[str]) -> None:
+    def set(self, endpoint_name: str, request: EndpointDefinitionGen, response: TResponse, tags: list[str]) -> None:
         raise NotImplementedError
 
     def invalidate_tags(self, tags: list[str]) -> None:
