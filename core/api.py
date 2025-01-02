@@ -166,12 +166,18 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
         return decorator
 
-    def mutation(self, name: str, invalidates_tags: Optional[list[str]] = None):
+    def mutation(
+        self, name: str, invalidates_tags: Optional[list[str]] = None
+    ) -> Callable[
+        [Callable[QueryParam, EndpointDefinitionGen]], SyncAsync[QueryParam, BaseModel]
+    ]:
         """Decorator to register a mutation endpoint.
         The decorated function will execute the mutation and return the response.
         """
 
-        def decorator(fn: Callable[..., EndpointDefinitionGen]):
+        def decorator(
+            fn: Callable[QueryParam, EndpointDefinitionGen],
+        ) -> SyncAsync[QueryParam, BaseModel]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
                 invalidates_tags=invalidates_tags or [],
@@ -179,9 +185,41 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             )
             self.endpoints[name] = endpoint
 
+            if TYPE_CHECKING:
+
+                @overload
+                def wrapper(
+                    is_async: Literal[False],
+                    *args: QueryParam.args,
+                    **kwargs: QueryParam.kwargs,
+                ) -> None: ...
+
+                @overload
+                def wrapper(
+                    is_async: Literal[True] = True,
+                    *args: QueryParam.args,
+                    **kwargs: QueryParam.kwargs,
+                ) -> asyncio.Future[None]: ...
+
+                @overload
+                def wrapper(
+                    is_async: bool = True,
+                    *args: QueryParam.args,
+                    **kwargs: QueryParam.kwargs,
+                ) -> asyncio.Future[None] | None: ...
+
             @wraps(fn)
-            def wrapper(*args, **kwargs):
-                return self.run_mutation(name, *args, **kwargs)
+            def wrapper(is_async: bool, *args, **kwargs) -> asyncio.Future[None] | None:
+                if is_async:
+                    return asyncio.ensure_future(
+                        self.run_mutation(
+                            is_async=True, endpoint_name=name, *args, **kwargs
+                        )
+                    )
+
+                return self.run_mutation(
+                    is_async=False, endpoint_name=name, *args, **kwargs
+                )
 
             return wrapper
 
@@ -243,7 +281,24 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             )
         return response
 
-    def run_mutation(self, endpoint_name: str, *args, **kwargs) -> TResponse:
+    @overload
+    def run_mutation(
+        self, is_async: Literal[False], endpoint_name: str, *args, **kwargs
+    ) -> TResponse: ...
+
+    @overload
+    def run_mutation(
+        self, is_async: Literal[True], endpoint_name: str, *args, **kwargs
+    ) -> asyncio.Future[TResponse]: ...
+
+    @overload
+    def run_mutation(
+        self, is_async: bool, endpoint_name: str, *args, **kwargs
+    ) -> asyncio.Future[TResponse] | TResponse: ...
+
+    def run_mutation(
+        self, is_async: bool, endpoint_name: str, *args, **kwargs
+    ) -> asyncio.Future[TResponse] | TResponse:
         if self.base_query_fn is None:
             raise ValueError("base_query function is not set.")
 
@@ -253,6 +308,19 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
         request_def = endpoint.request_fn(*args, **kwargs)
         assert self.base_query_fn_handler
+        if is_async:
+
+            async def _run() -> TResponse:
+                assert self.base_query_fn_handler_async is not None
+                response = await self.base_query_fn_handler_async(
+                    self.base_query_config, request_def
+                )
+                if endpoint.invalidates_tags and self.cache_strategy:
+                    self.cache_strategy.invalidate_tags(endpoint.invalidates_tags)
+                return response
+
+            return asyncio.ensure_future(_run())
+
         response = self.base_query_fn_handler(self.base_query_config, request_def)
 
         if endpoint.invalidates_tags and self.cache_strategy:
