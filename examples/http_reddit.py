@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
-from api import HttpApi
-from api.http import RequestDefinition
+from api.http import RequestDefinition, HttpApi
 from core.types import BaseQueryConfig
 
 

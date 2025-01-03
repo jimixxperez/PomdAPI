@@ -1,7 +1,8 @@
 import httpx
+
 from typing import TypedDict, Required, Optional, Any
 from core.api import Api
-from core.types import BaseQueryConfig
+from core.types import BaseQueryConfig, CachingStrategy
 
 class RequestDefinition(TypedDict, total=False):
     """Defines a request for the API."""
@@ -56,7 +57,7 @@ async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any
 class HttpApi(Api[RequestDefinition, Any]):
     
     @classmethod
-    def from_defaults(cls, base_query_config: BaseQueryConfig, caching_strategy: Optional[CacheStrategy[RequestDefinition]] = InMemoryCacheStrategy(),):
+    def from_defaults(cls, base_query_config: BaseQueryConfig, caching_strategy: Optional[CachingStrategy[RequestDefinition, Any]] = None,):
         return cls(
             base_query_config=base_query_config,
             base_query_fn_handler=base_query_fn,

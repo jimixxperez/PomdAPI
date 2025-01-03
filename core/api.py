@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import wraps
 from typing import (
     TYPE_CHECKING,
@@ -14,7 +14,7 @@ from typing import (
     Coroutine,
 )
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 
 from .types import (
     TResponse,
@@ -25,7 +25,7 @@ from .types import (
 
 
 QueryParam = ParamSpec("QueryParam")
-ResponseType = TypeVar("ResponseType", bound=BaseModel)
+ResponseType = TypeVar("ResponseType")
 QueryResponse = TypeVar("QueryResponse")
 
 
@@ -78,7 +78,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
         ]
     ] = None
-    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = Field(
+    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
         default_factory=dict
     )
     cache_strategy: Optional[CachingStrategy[EndpointDefinitionGen, TResponse]] = None
@@ -122,11 +122,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
                 ) -> ResponseType:
-                    return response_type.model_validate(
-                        self.run_query(
-                            is_async=False, endpoint_name=name, *args, **kwargs
-                        )
-                    )
+                    ...
 
                 @overload
                 def wrapper(
@@ -148,21 +144,34 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 *args: QueryParam.args,
                 **kwargs: QueryParam.kwargs,
             ) -> asyncio.Future[ResponseType] | ResponseType:
+
+
                 if is_async:
-                    return response_type.model_validate(
-                        self.run_query(
-                            is_async=False, endpoint_name=name, *args, **kwargs
+                    async def _run() -> ResponseType:
+                        response = await self.run_query(
+                            is_async=True, endpoint_name=name, *args, **kwargs
                         )
+                        if isinstance(response_type, BaseModel):
+                            return response_type.model_validate(
+                                response
+                            )
+                        adapter = TypeAdapter(response_type)
+                        return adapter.validate_python(response)
+
+                    return asyncio.ensure_future(_run())
+
+                response = self.run_query(
+                    is_async=False, endpoint_name=name, *args, **kwargs
+                )
+
+                if isinstance(response_type, BaseModel):
+                    return response_type.model_validate(
+                        response
                     )
-
-                async def _run() -> ResponseType:
-                    response = await self.run_query(
-                        is_async=True, endpoint_name=name, *args, **kwargs
-                    )
-                    return response_type.model_validate(response)
-
-                return asyncio.ensure_future(_run())
-
+                adapter = TypeAdapter(response_type)
+                return adapter.validate_python(
+                    response
+                )
             return wrapper
 
         return decorator
@@ -218,21 +227,29 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 ResponseType | None
             ] | (ResponseType | None):
                 if is_async:
-
                     async def _run() -> ResponseType | None:
                         response = await self.run_mutation(
                             is_async=True, endpoint_name=name, *args, **kwargs
                         )
                         if response_type is None:
                             return None
-                        return response_type.model_validate(response)
+                        if isinstance(response_type, BaseModel):
+                            return response_type.model_validate(response)
+
+                        adapter = TypeAdapter(response_type)
+                        return adapter.validate_python(response)
+                    return asyncio.ensure_future(_run())
 
                 response = self.run_mutation(
                     is_async=False, endpoint_name=name, *args, **kwargs
                 )
                 if response_type is None:
                     return None
-                return response_type.model_validate(response)
+                if isinstance(response_type, BaseModel):
+                    return response_type.model_validate(response)
+
+                adapter = TypeAdapter(response_type)
+                return adapter.validate_python(response)
 
             return wrapper
 
