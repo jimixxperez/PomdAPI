@@ -14,7 +14,7 @@ from typing import (
     Coroutine,
 )
 
-from pydantic import BaseModel, field
+from pydantic import BaseModel, Field
 
 from .types import (
     TResponse,
@@ -25,7 +25,8 @@ from .types import (
 
 
 QueryParam = ParamSpec("QueryParam")
-QueryResponse = TypeVar("QueryResponse", bound=BaseModel)
+ResponseType = TypeVar("ResponseType", bound=BaseModel)
+QueryResponse = TypeVar("QueryResponse")
 
 
 import asyncio
@@ -77,7 +78,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
         ]
     ] = None
-    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
+    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = Field(
         default_factory=dict
     )
     cache_strategy: Optional[CachingStrategy[EndpointDefinitionGen, TResponse]] = None
@@ -93,11 +94,11 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
     def query(
         self,
         name: str,
-        response_type: Type[QueryResponse],
+        response_type: Type[ResponseType],
         provides_tags: Optional[list[str]] = None,
     ) -> Callable[
         [Callable[QueryParam, EndpointDefinitionGen]],
-        SyncAsync[QueryParam, QueryResponse],
+        SyncAsync[QueryParam, ResponseType],
     ]:
         """Decorator to register a query endpoint.
         The decorated function will execute the query and return the response.
@@ -105,7 +106,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
         def decorator(
             fn: Callable[QueryParam, EndpointDefinitionGen],
-        ) -> SyncAsync[QueryParam, QueryResponse]:
+        ) -> SyncAsync[QueryParam, ResponseType]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
                 provides_tags=provides_tags or [],
@@ -120,7 +121,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     is_async: Literal[False],
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> QueryResponse:
+                ) -> ResponseType:
                     return response_type.model_validate(
                         self.run_query(
                             is_async=False, endpoint_name=name, *args, **kwargs
@@ -132,21 +133,21 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     is_async: Literal[True] = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[QueryResponse]: ...
+                ) -> asyncio.Future[ResponseType]: ...
 
                 @overload
                 def wrapper(
                     is_async: bool = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[QueryResponse] | QueryResponse: ...
+                ) -> asyncio.Future[ResponseType] | ResponseType: ...
 
             @wraps(fn)
             def wrapper(
                 is_async: bool = True,
                 *args: QueryParam.args,
                 **kwargs: QueryParam.kwargs,
-            ) -> asyncio.Future[QueryResponse] | QueryResponse:
+            ) -> asyncio.Future[ResponseType] | ResponseType:
                 if is_async:
                     return response_type.model_validate(
                         self.run_query(
@@ -154,7 +155,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                         )
                     )
 
-                async def _run() -> QueryResponse:
+                async def _run() -> ResponseType:
                     response = await self.run_query(
                         is_async=True, endpoint_name=name, *args, **kwargs
                     )
@@ -167,9 +168,13 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         return decorator
 
     def mutation(
-        self, name: str, invalidates_tags: Optional[list[str]] = None
+        self,
+        name: str,
+        invalidates_tags: Optional[list[str]] = None,
+        response_type: Type[ResponseType] | None = None,
     ) -> Callable[
-        [Callable[QueryParam, EndpointDefinitionGen]], SyncAsync[QueryParam, BaseModel]
+        [Callable[QueryParam, EndpointDefinitionGen]],
+        SyncAsync[QueryParam, (ResponseType | None)],
     ]:
         """Decorator to register a mutation endpoint.
         The decorated function will execute the mutation and return the response.
@@ -177,7 +182,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
         def decorator(
             fn: Callable[QueryParam, EndpointDefinitionGen],
-        ) -> SyncAsync[QueryParam, BaseModel]:
+        ) -> SyncAsync[QueryParam, (ResponseType | None)]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
                 invalidates_tags=invalidates_tags or [],
@@ -192,34 +197,42 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     is_async: Literal[False],
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> None: ...
+                ) -> ResponseType | None: ...
 
                 @overload
                 def wrapper(
                     is_async: Literal[True] = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[None]: ...
+                ) -> asyncio.Future[ResponseType | None]: ...
 
                 @overload
                 def wrapper(
                     is_async: bool = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[None] | None: ...
+                ) -> asyncio.Future[ResponseType | None] | (ResponseType | None): ...
 
             @wraps(fn)
-            def wrapper(is_async: bool, *args, **kwargs) -> asyncio.Future[None] | None:
+            def wrapper(is_async: bool, *args, **kwargs) -> asyncio.Future[
+                ResponseType | None
+            ] | (ResponseType | None):
                 if is_async:
-                    return asyncio.ensure_future(
-                        self.run_mutation(
+
+                    async def _run() -> ResponseType | None:
+                        response = await self.run_mutation(
                             is_async=True, endpoint_name=name, *args, **kwargs
                         )
-                    )
+                        if response_type is None:
+                            return None
+                        return response_type.model_validate(response)
 
-                return self.run_mutation(
+                response = self.run_mutation(
                     is_async=False, endpoint_name=name, *args, **kwargs
                 )
+                if response_type is None:
+                    return None
+                return response_type.model_validate(response)
 
             return wrapper
 
