@@ -21,6 +21,7 @@ from .types import (
     BaseQueryConfig,
     EndpointDefinition,
     CachingStrategy,
+    ProvidesTags,
 )
 
 
@@ -30,7 +31,7 @@ QueryResponse = TypeVar("QueryResponse")
 
 
 import asyncio
-from typing import overload, Awaitable
+from typing import overload, Awaitable, Literal, Annotated
 
 
 class SyncAsync(Protocol[QueryParam, QueryResponse]):
@@ -78,7 +79,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
         ]
     ] = None
-    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
+    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen, ...]] = field(
         default_factory=dict
     )
     cache_strategy: Optional[CachingStrategy[EndpointDefinitionGen, TResponse]] = None
@@ -97,7 +98,10 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         response_type: Type[ResponseType],
         provides_tags: Optional[list[str]] = None,
     ) -> Callable[
-        [Callable[QueryParam, EndpointDefinitionGen]],
+        [
+            Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
+        ],
         SyncAsync[QueryParam, ResponseType],
     ]:
         """Decorator to register a query endpoint.
@@ -105,11 +109,11 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         """
 
         def decorator(
-            fn: Callable[QueryParam, EndpointDefinitionGen],
+            fn: Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]],
         ) -> SyncAsync[QueryParam, ResponseType]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
-                provides_tags=provides_tags or [],
                 is_query_endpoint=True,
             )
             self.endpoints[name] = endpoint
@@ -121,8 +125,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     is_async: Literal[False],
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> ResponseType:
-                    ...
+                ) -> ResponseType: ...
 
                 @overload
                 def wrapper(
@@ -144,17 +147,14 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 *args: QueryParam.args,
                 **kwargs: QueryParam.kwargs,
             ) -> asyncio.Future[ResponseType] | ResponseType:
-
-
                 if is_async:
+
                     async def _run() -> ResponseType:
                         response = await self.run_query(
                             is_async=True, endpoint_name=name, *args, **kwargs
                         )
                         if isinstance(response_type, BaseModel):
-                            return response_type.model_validate(
-                                response
-                            )
+                            return response_type.model_validate(response)
                         adapter = TypeAdapter(response_type)
                         return adapter.validate_python(response)
 
@@ -165,13 +165,10 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 )
 
                 if isinstance(response_type, BaseModel):
-                    return response_type.model_validate(
-                        response
-                    )
+                    return response_type.model_validate(response)
                 adapter = TypeAdapter(response_type)
-                return adapter.validate_python(
-                    response
-                )
+                return adapter.validate_python(response)
+
             return wrapper
 
         return decorator
@@ -179,10 +176,12 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
     def mutation(
         self,
         name: str,
-        invalidates_tags: Optional[list[str]] = None,
         response_type: Type[ResponseType] | None = None,
     ) -> Callable[
-        [Callable[QueryParam, EndpointDefinitionGen]],
+        [
+            Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
+        ],
         SyncAsync[QueryParam, (ResponseType | None)],
     ]:
         """Decorator to register a mutation endpoint.
@@ -190,11 +189,11 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         """
 
         def decorator(
-            fn: Callable[QueryParam, EndpointDefinitionGen],
+            fn: Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]],
         ) -> SyncAsync[QueryParam, (ResponseType | None)]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
-                invalidates_tags=invalidates_tags or [],
                 is_query_endpoint=False,
             )
             self.endpoints[name] = endpoint
@@ -227,6 +226,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 ResponseType | None
             ] | (ResponseType | None):
                 if is_async:
+
                     async def _run() -> ResponseType | None:
                         response = await self.run_mutation(
                             is_async=True, endpoint_name=name, *args, **kwargs
@@ -238,6 +238,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
                         adapter = TypeAdapter(response_type)
                         return adapter.validate_python(response)
+
                     return asyncio.ensure_future(_run())
 
                 response = self.run_mutation(

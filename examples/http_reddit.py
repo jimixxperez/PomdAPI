@@ -1,8 +1,8 @@
+from httpx import Request
 from pydantic import BaseModel
 
-from api.http import RequestDefinition, HttpApi
+from api.http import HttpApi, RequestDefinition
 from core.types import BaseQueryConfig
-
 
 # For more info on Reddit API rules, see: https://github.com/reddit-archive/reddit/wiki/API
 REDDIT_USER_AGENT = "MyRedditClient/0.1 by YourUsername"
@@ -29,35 +29,46 @@ class HotSubreddit(BaseModel):
 )
 def get_subreddit_hot(subreddit: str, limit: int = 10) -> RequestDefinition:
     """Get the hot posts for a given subreddit."""
-    return {"method": "GET", "url": f"/r/{subreddit}/hot.json?limit={limit}"}
+    return RequestDefinition("")
 
 
 class UserInfo(BaseModel):
+    """
+    User info
+    """
+
     hot: str
 
 
-@reddit_api.query("getUserInfo", provides_tags=["UserInfo"], response_type=UserInfo)
-def get_user_info(username: str) -> RequestDefinition:
+from core.types import Tag
+
+
+@reddit_api.query("getUserInfo", response_type=UserInfo)
+def get_user_info(username: str):
     """Get information about a Reddit user."""
-    return {
-        "method": "GET",
-        "url": f"/user/{username}/about.json",
-    }
+    return (
+        RequestDefinition(
+            method="GET",
+            url=f"/user/{username}/about.json",
+        ),
+        Tag(type="UserInfo", id=username),
+    )
 
 
-@reddit_api.mutation("savePost", invalidates_tags=["SubredditPosts"])
-def save_post(post_fullname: str) -> RequestDefinition:
+@reddit_api.mutation("savePost")
+def save_post(post_fullname: str):
     """Save a post (requires authenticated user and correct scopes)."""
-    return {
-        "method": "POST",
-        "url": "/api/save",
-        "body": {"id": post_fullname},
-    }
+    return RequestDefinition(
+        method="POST",
+        url="/api/save",
+        body={"id": post_fullname},
+    ), Tag("Post", id=post_fullname)
 
 
 if __name__ == "__main__":
     # sync version
     hot_subreddits = get_subreddit_hot(is_async=False, subreddit="reddit", limit=20)
+    user_info = get_user_info(is_async=False, username="test")
 
     import asyncio
 
