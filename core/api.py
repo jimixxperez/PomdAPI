@@ -60,7 +60,7 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
     ) -> asyncio.Future[QueryResponse] | QueryResponse: ...
 
 
-EndpointDefinitionGen = TypeVar("EndpointDefinitionGen", covariant=True)
+EndpointDefinitionGen = TypeVar("EndpointDefinitionGen")
 
 
 @dataclass

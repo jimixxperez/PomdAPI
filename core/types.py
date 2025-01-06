@@ -11,7 +11,7 @@ from typing import (
 )
 
 TResponse = TypeVar("TResponse")
-EndpointDefinitionGen = TypeVar("EndpointDefinitionGen")
+EndpointDefinitionGen = TypeVar("EndpointDefinitionGen", contravariant=True)
 
 from typing import Iterable, ParamSpec
 
