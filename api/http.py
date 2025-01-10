@@ -67,10 +67,11 @@ class HttpApi(Api[RequestDefinition, Any]):
     def from_defaults(
         cls,
         base_query_config: BaseQueryConfig,
-        caching_strategy: Optional[Cache[RequestDefinition, Any]] = None,
+        cache: Optional[Cache[RequestDefinition, Any]] = None,
     ):
         return cls(
             base_query_config=base_query_config,
             base_query_fn_handler=base_query_fn,
             base_query_fn_handler_async=abase_query_fn,
+            cache=cache,
         )

@@ -1,6 +1,6 @@
 import time
 from dataclasses import dataclass
-from typing import Generic, Iterable, Optional
+from typing import Any, Generic, Iterable, Optional
 from core.types import (
     SyncCachingStrategy,
     AyncCachingStrategy,
@@ -17,20 +17,23 @@ class CachedItem(Generic[TResponse]):
     timestamp: int
 
 
-class InMemoryBackend(Generic[TResponse]):
+class InMemoryBackend:
     """In memory cache backend."""
     def __init__(self):
-        self._store: dict[str, CachedItem[TResponse]] = {}
+        self._store: dict[str, CachedItem[dict[str, Any] | str]] = {}
 
     def delete(self, key: str) -> None:
         """"Delete a key from the cache."""
-        del self._store[key]
+        try:
+            del self._store[key]
+        except KeyError:
+            print("key not found")
 
     async def adelete(self, key: str) -> None:
         """"Delete a key from the cache."""
         return self.delete(key)
 
-    def get(self, key: str) -> Optional[TResponse]:
+    def get(self, key: str) -> Optional[dict[str, Any] | str]:
         """"Get a key from the cache."""
         cached_item = self._store.get(key)
         if cached_item is None:
@@ -48,19 +51,19 @@ class InMemoryBackend(Generic[TResponse]):
         return req
 
 
-    async def aget(self, key: str) -> Optional[TResponse]:
+    async def aget(self, key: str) -> Optional[dict[str, Any] | str]:
         """"Get a key from the cache."""
         return self.get(key)
 
-    def set(self, key: str, value: TResponse, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: dict[str, Any] | str, ttl: Optional[int] = None) -> None:
         """"Set a key in the cache."""
         self._store[key] = CachedItem(value, ttl, int(time.time()))
 
-    async def aset(self, key: str, value: TResponse, ttl: Optional[int] = None) -> None:
+    async def aset(self, key: str, value: dict[str, Any] | str, ttl: Optional[int] = None) -> None:
         """"Set a key in the cache."""
         self.set(key, value, ttl)
 
 
 class InMemoryCache(Cache[EndpointDefinitionGen, TResponse]):
     def __init__(self):
-        super().__init__(_backend=InMemoryBackend[TResponse]())
+        super().__init__(_backend=InMemoryBackend())

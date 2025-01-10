@@ -4,6 +4,7 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     Generic,
+    Iterable,
     Literal,
     Optional,
     ParamSpec,
@@ -233,6 +234,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                         )
                         if response_type is None:
                             return None
+
                         if isinstance(response_type, BaseModel):
                             return response_type.model_validate(response)
 
@@ -246,6 +248,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 )
                 if response_type is None:
                     return None
+
                 if isinstance(response_type, BaseModel):
                     return response_type.model_validate(response)
 
@@ -282,8 +285,12 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             raise ValueError(f"No query endpoint named '{endpoint_name}' found.")
 
         request_def_and_tags =  endpoint.request_fn(*args, **kwargs)
+        tags = None
         if isinstance(request_def_and_tags, tuple):
             request_def, tags = request_def_and_tags
+            if not isinstance(tags, Iterable):
+                tags = [tags]
+
         else:
             request_def = request_def_and_tags
 
@@ -302,8 +309,11 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 )
 
                 if self.cache:
-                    self.cache.set(
-                        endpoint_name, request_def, response, endpoint.provides_tags
+                    await self.cache.aset(
+                        endpoint_name=endpoint_name, 
+                        request=request_def, 
+                        response=response, 
+                        tags=tags and tags or [],
                     )
                 return response
 
@@ -312,7 +322,10 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         response = self.base_query_fn_handler(self.base_query_config, request_def)
         if self.cache:
             self.cache.set(
-                endpoint_name, request_def, response, endpoint.provides_tags
+                endpoint_name=endpoint_name, 
+                request=request_def, 
+                response=response,
+                tags=tags and tags or [],
             )
         return response
 
@@ -342,8 +355,11 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             raise ValueError(f"No mutation endpoint named '{endpoint_name}' found.")
 
         request_def_and_tags = endpoint.request_fn(*args, **kwargs)
+        tags = None
         if isinstance(request_def_and_tags, tuple):
             request_def, tags = request_def_and_tags
+            if not isinstance(tags, Iterable):
+                tags = [tags]
         else:
             request_def = request_def_and_tags
         assert self.base_query_fn_handler
@@ -354,14 +370,14 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                 response = await self.base_query_fn_handler_async(
                     self.base_query_config, request_def,
                 )
-                if self.cache:
-                    await self.cache.ainvalidate_tags(tags)
+                if self.cache and tags:
+                    await self.cache.ainvalidate_tags(endpoint_name=endpoint_name, tags=tags,)
                 return response
 
             return asyncio.ensure_future(_run())
 
         response = self.base_query_fn_handler(self.base_query_config, request_def)
 
-        if self.cache:
-            self.cache.invalidate_tags(tags)
+        if self.cache and tags:
+            self.cache.invalidate_tags(endpoint_name=endpoint_name, tags=tags,)
         return response
