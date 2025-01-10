@@ -26,8 +26,8 @@ class Tag:
 
 
 ProvidesTags = (
-    tuple[ReqDefinition, (str | Tag | Iterable[str | Tag])]
-    | tuple[ReqDefinition, Callable[P, str | Tag | Iterable[str | Tag]]]
+    tuple[EndpointDefinitionGen, (str | Tag | Iterable[str | Tag])]
+    | tuple[EndpointDefinitionGen, Callable[P, str | Tag | Iterable[str | Tag]]]
 )
 
 
@@ -42,12 +42,12 @@ class BaseQueryConfig:
 
 
 @dataclass
-class EndpointDefinition(Generic[EndpointDefinitionGen, P]):
+class EndpointDefinition(Generic[EndpointDefinitionGen]):
     """Defines an endpoint for the API."""
 
     request_fn: (
         Callable[..., EndpointDefinitionGen]
-        | Callable[..., ProvidesTags[EndpointDefinitionGen, P]]
+        | Callable[..., ProvidesTags[EndpointDefinitionGen, ...]]
     )
     is_query_endpoint: bool = True
 

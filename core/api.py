@@ -13,6 +13,7 @@ from typing import (
     TypeVar,
     Concatenate,
     Coroutine,
+    cast,
 )
 
 from pydantic import BaseModel, Field, TypeAdapter
@@ -42,7 +43,8 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
         is_async: Literal[False],
         *args: QueryParam.args,
         **kwargs: QueryParam.kwargs,
-    ) -> QueryResponse: ...
+    ) -> QueryResponse:
+        ...
 
     @overload
     def __call__(
@@ -50,7 +52,8 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
         is_async: Literal[True] = True,
         *args: QueryParam.args,
         **kwargs: QueryParam.kwargs,
-    ) -> asyncio.Future[QueryResponse]: ...
+    ) -> asyncio.Future[QueryResponse]:
+        ...
 
     @overload
     def __call__(
@@ -58,7 +61,8 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
         is_async: bool = True,
         *args: QueryParam.args,
         **kwargs: QueryParam.kwargs,
-    ) -> asyncio.Future[QueryResponse] | QueryResponse: ...
+    ) -> asyncio.Future[QueryResponse] | QueryResponse:
+        ...
 
 
 EndpointDefinitionGen = TypeVar("EndpointDefinitionGen")
@@ -126,21 +130,24 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     is_async: Literal[False],
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> ResponseType: ...
+                ) -> ResponseType:
+                    ...
 
                 @overload
                 def wrapper(
                     is_async: Literal[True] = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[ResponseType]: ...
+                ) -> asyncio.Future[ResponseType]:
+                    ...
 
                 @overload
                 def wrapper(
                     is_async: bool = True,
                     *args: QueryParam.args,
                     **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[ResponseType] | ResponseType: ...
+                ) -> asyncio.Future[ResponseType] | ResponseType:
+                    ...
 
             @wraps(fn)
             def wrapper(
@@ -174,6 +181,35 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
         return decorator
 
+    @overload
+    def mutation(
+        self,
+        name: str,
+        response_type: Type[ResponseType],
+    ) -> Callable[
+        [
+            Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
+        ],
+        SyncAsync[QueryParam, ResponseType],
+    ]:
+        ...
+
+    @overload
+    def mutation(
+        self,
+        name: str,
+        response_type: Literal[None] = None,
+    ) -> Callable[
+        [
+            Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
+        ],
+        SyncAsync[QueryParam, None],
+    ]:
+        ...
+
+    @overload
     def mutation(
         self,
         name: str,
@@ -183,7 +219,20 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             Callable[QueryParam, EndpointDefinitionGen]
             | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
         ],
-        SyncAsync[QueryParam, (ResponseType | None)],
+        SyncAsync[QueryParam, ResponseType] | SyncAsync[QueryParam, None],
+    ]:
+        ...
+
+    def mutation(
+        self,
+        name: str,
+        response_type: Type[ResponseType] | None = None,
+    ) -> Callable[
+        [
+            Callable[QueryParam, EndpointDefinitionGen]
+            | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]]
+        ],
+        SyncAsync[QueryParam, ResponseType] | SyncAsync[QueryParam, None],
     ]:
         """Decorator to register a mutation endpoint.
         The decorated function will execute the mutation and return the response.
@@ -192,87 +241,138 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         def decorator(
             fn: Callable[QueryParam, EndpointDefinitionGen]
             | Callable[QueryParam, ProvidesTags[EndpointDefinitionGen, QueryParam]],
-        ) -> SyncAsync[QueryParam, (ResponseType | None)]:
+        ) -> SyncAsync[QueryParam, ResponseType] | SyncAsync[QueryParam, None]:
             endpoint = EndpointDefinition(
                 request_fn=fn,
                 is_query_endpoint=False,
             )
             self.endpoints[name] = endpoint
 
-            if TYPE_CHECKING:
+            if response_type is None:
+                if TYPE_CHECKING:
 
-                @overload
-                def wrapper(
-                    is_async: Literal[False],
-                    *args: QueryParam.args,
-                    **kwargs: QueryParam.kwargs,
-                ) -> ResponseType | None: ...
+                    @overload
+                    def none_wrapper(
+                        is_async: Literal[False],
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> None:
+                        ...
 
-                @overload
-                def wrapper(
-                    is_async: Literal[True] = True,
-                    *args: QueryParam.args,
-                    **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[ResponseType | None]: ...
+                    @overload
+                    def none_wrapper(
+                        is_async: Literal[True] = True,
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> asyncio.Future[None]:
+                        ...
 
-                @overload
-                def wrapper(
-                    is_async: bool = True,
-                    *args: QueryParam.args,
-                    **kwargs: QueryParam.kwargs,
-                ) -> asyncio.Future[ResponseType | None] | (ResponseType | None): ...
+                    @overload
+                    def none_wrapper(
+                        is_async: bool = True,
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> asyncio.Future[None] | None:
+                        ...
 
-            @wraps(fn)
-            def wrapper(is_async: bool, *args, **kwargs) -> asyncio.Future[
-                ResponseType | None
-            ] | (ResponseType | None):
-                if is_async:
+                @wraps(fn)
+                def none_wrapper(
+                    is_async: bool, *args, **kwargs
+                ) -> asyncio.Future[None] | (None):
+                    if is_async:
 
-                    async def _run() -> ResponseType | None:
-                        response = await self.run_mutation(
-                            is_async=True, endpoint_name=name, *args, **kwargs
-                        )
-                        if response_type is None:
+                        async def _run() -> None:
+                            await self.run_mutation(
+                                is_async=True, endpoint_name=name, *args, **kwargs
+                            )
                             return None
 
-                        if isinstance(response_type, BaseModel):
-                            return response_type.model_validate(response)
+                        return asyncio.ensure_future(_run())
 
-                        adapter = TypeAdapter(response_type)
-                        return adapter.validate_python(response)
-
-                    return asyncio.ensure_future(_run())
-
-                response = self.run_mutation(
-                    is_async=False, endpoint_name=name, *args, **kwargs
-                )
-                if response_type is None:
+                    self.run_mutation(
+                        is_async=False, endpoint_name=name, *args, **kwargs
+                    )
                     return None
 
-                if isinstance(response_type, BaseModel):
-                    return response_type.model_validate(response)
+                return none_wrapper
 
-                adapter = TypeAdapter(response_type)
-                return adapter.validate_python(response)
+            else:
+                if TYPE_CHECKING:
 
-            return wrapper
+                    @overload
+                    def wrapper(
+                        is_async: Literal[False],
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> ResponseType:
+                        ...
+
+                    @overload
+                    def wrapper(
+                        is_async: Literal[True] = True,
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> asyncio.Future[ResponseType]:
+                        ...
+
+                    @overload
+                    def wrapper(
+                        is_async: bool = True,
+                        *args: QueryParam.args,
+                        **kwargs: QueryParam.kwargs,
+                    ) -> asyncio.Future[ResponseType] | (ResponseType):
+                        ...
+
+                @wraps(fn)
+                def wrapper(
+                    is_async: bool, *args, **kwargs
+                ) -> asyncio.Future[ResponseType] | (ResponseType):
+                    if is_async:
+
+                        async def _run() -> ResponseType:
+                            response = await self.run_mutation(
+                                is_async=True, endpoint_name=name, *args, **kwargs
+                            )
+
+                            if isinstance(response_type, BaseModel):
+                                return response_type.model_validate(response)
+
+                            adapter = TypeAdapter(response_type)
+                            return adapter.validate_python(response)
+
+                        return asyncio.ensure_future(_run())
+
+                    response = self.run_mutation(
+                        is_async=False, endpoint_name=name, *args, **kwargs
+                    )
+
+                    if isinstance(response_type, BaseModel):
+                        return response_type.model_validate(response)
+
+                    adapter = TypeAdapter(response_type)
+                    return adapter.validate_python(response)
+
+                return wrapper
 
         return decorator
 
     @overload
     def run_query(
         self, is_async: Literal[False], endpoint_name: str, *args, **kwargs
-    ) -> TResponse: ...
+    ) -> TResponse:
+        ...
 
     @overload
     def run_query(
         self, is_async: Literal[True], endpoint_name: str, *args, **kwargs
-    ) -> asyncio.Future[TResponse]: ...
+    ) -> asyncio.Future[TResponse]:
+        ...
 
     @overload
     def run_query(
         self, is_async: bool, endpoint_name: str, *args, **kwargs
-    ) -> asyncio.Future[TResponse] | TResponse: ...
+    ) -> asyncio.Future[TResponse] | TResponse:
+        ...
 
     def run_query(
         self, is_async: bool, endpoint_name: str, *args, **kwargs
@@ -284,15 +384,16 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         if endpoint is None or not endpoint.is_query:
             raise ValueError(f"No query endpoint named '{endpoint_name}' found.")
 
-        request_def_and_tags =  endpoint.request_fn(*args, **kwargs)
+        request_def_and_tags = endpoint.request_fn(*args, **kwargs)
         tags = None
         if isinstance(request_def_and_tags, tuple):
             request_def, tags = request_def_and_tags
+            if callable(tags):
+                tags = tags(*args, **kwargs)
             if not isinstance(tags, Iterable):
                 tags = [tags]
-
         else:
-            request_def = request_def_and_tags
+            request_def = cast(EndpointDefinitionGen, request_def_and_tags)
 
         if self.cache:
             cached_response = self.cache.get_by_request(endpoint_name, request_def)
@@ -310,9 +411,9 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
 
                 if self.cache:
                     await self.cache.aset(
-                        endpoint_name=endpoint_name, 
-                        request=request_def, 
-                        response=response, 
+                        endpoint_name=endpoint_name,
+                        request=request_def,
+                        response=response,
                         tags=tags and tags or [],
                     )
                 return response
@@ -322,8 +423,8 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         response = self.base_query_fn_handler(self.base_query_config, request_def)
         if self.cache:
             self.cache.set(
-                endpoint_name=endpoint_name, 
-                request=request_def, 
+                endpoint_name=endpoint_name,
+                request=request_def,
                 response=response,
                 tags=tags and tags or [],
             )
@@ -332,17 +433,20 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
     @overload
     def run_mutation(
         self, is_async: Literal[False], endpoint_name: str, *args, **kwargs
-    ) -> TResponse: ...
+    ) -> TResponse:
+        ...
 
     @overload
     def run_mutation(
         self, is_async: Literal[True], endpoint_name: str, *args, **kwargs
-    ) -> asyncio.Future[TResponse]: ...
+    ) -> asyncio.Future[TResponse]:
+        ...
 
     @overload
     def run_mutation(
         self, is_async: bool, endpoint_name: str, *args, **kwargs
-    ) -> asyncio.Future[TResponse] | TResponse: ...
+    ) -> asyncio.Future[TResponse] | TResponse:
+        ...
 
     def run_mutation(
         self, is_async: bool, endpoint_name: str, *args, **kwargs
@@ -358,20 +462,26 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         tags = None
         if isinstance(request_def_and_tags, tuple):
             request_def, tags = request_def_and_tags
+            if callable(tags):
+                tags = tags(*args, **kwargs)
             if not isinstance(tags, Iterable):
                 tags = [tags]
         else:
-            request_def = request_def_and_tags
+            request_def = cast(EndpointDefinitionGen, request_def_and_tags)
         assert self.base_query_fn_handler
         if is_async:
 
             async def _run() -> TResponse:
                 assert self.base_query_fn_handler_async is not None
                 response = await self.base_query_fn_handler_async(
-                    self.base_query_config, request_def,
+                    self.base_query_config,
+                    request_def,
                 )
                 if self.cache and tags:
-                    await self.cache.ainvalidate_tags(endpoint_name=endpoint_name, tags=tags,)
+                    await self.cache.ainvalidate_tags(
+                        endpoint_name=endpoint_name,
+                        tags=tags,
+                    )
                 return response
 
             return asyncio.ensure_future(_run())
@@ -379,5 +489,8 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         response = self.base_query_fn_handler(self.base_query_config, request_def)
 
         if self.cache and tags:
-            self.cache.invalidate_tags(endpoint_name=endpoint_name, tags=tags,)
+            self.cache.invalidate_tags(
+                endpoint_name=endpoint_name,
+                tags=tags,
+            )
         return response
