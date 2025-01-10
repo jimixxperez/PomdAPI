@@ -9,6 +9,7 @@ from core.types import BaseQueryConfig
 GITHUB_BASE_URL = "https://api.github.com"
 GITHUB_TOKEN =   os.environ["GITHUB_TOKEN"]
 
+
 github_api = HttpApi.from_defaults(
     base_query_config=BaseQueryConfig(
         base_url=GITHUB_BASE_URL,
@@ -156,6 +157,8 @@ if __name__ == "__main__":
     open_issues = get_repo_issues(is_async=False, owner="octocat", repo="Hello-World")
     first_issue = get_repo_issue(is_async=False, owner="octocat", repo="Hello-World", issue_number=1)
     print(f"first issue: {first_issue}")
+    # This will not refetch the issue, but will return the cached version
+    first_issue = get_repo_issue(is_async=False, owner="octocat", repo="Hello-World", issue_number=1)
 
     print("Mutation example")
     new_issue = create_issue(

@@ -84,7 +84,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
         ]
     ] = None
-    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen, ...]] = field(
+    endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
         default_factory=dict
     )
     cache: Optional[Cache[EndpointDefinitionGen, TResponse]] = None
