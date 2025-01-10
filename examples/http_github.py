@@ -32,7 +32,7 @@ class Issue(BaseModel):
     # ... other fields returned by GitHub if you like
 
 
-@github_api.query("getRepoIssues", response_type=list[Issue], provides_tags=["Issue"])
+@github_api.query("getRepoIssues", response_type=list[Issue])
 def get_repo_issues(owner: str, repo: str, state: str = "open"):
     """
     Fetch issues for a given owner/repo.
@@ -47,7 +47,7 @@ def get_repo_issues(owner: str, repo: str, state: str = "open"):
     )
 
 
-@github_api.query("getRepoIssue", response_type=Issue, provides_tags=["Issue"])
+@github_api.query("getRepoIssue", response_type=Issue)
 def get_repo_issue(owner: str, repo: str, issue_number: int):
     """
     Fetch a single issue for a repository by its issue number.
