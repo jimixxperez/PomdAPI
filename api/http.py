@@ -3,14 +3,15 @@ import httpx
 from dataclasses import dataclass, field
 from typing import TypedDict, Required, Optional, Any, Literal
 from core.api import Api
-from core.types import BaseQueryConfig, CachingStrategy
+from core.caching import Cache
+from core.types import BaseQueryConfig
 
 
 @dataclass
 class RequestDefinition:
     """Defines a request for the API."""
 
-    method: Literal["GET", "POST", "PUT", "PATCH"]
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
     url: str
     body: Any = None
     headers: dict[str, str] = field(default_factory=dict)
@@ -66,7 +67,7 @@ class HttpApi(Api[RequestDefinition, Any]):
     def from_defaults(
         cls,
         base_query_config: BaseQueryConfig,
-        caching_strategy: Optional[CachingStrategy[RequestDefinition, Any]] = None,
+        caching_strategy: Optional[Cache[RequestDefinition, Any]] = None,
     ):
         return cls(
             base_query_config=base_query_config,

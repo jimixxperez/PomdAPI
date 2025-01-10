@@ -5,13 +5,13 @@ from dataclasses import dataclass, field
 @dataclass
 class AsyncRWLock:
     _readers: int = 0
-    _readers_lock: asyncio.Lock = asyncio.Lock()
-    _resource_lock: asyncio.Lock = asyncio.Lock()
+    _readers_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    _resource_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
-    async def read(self) -> "_ReaderContext":
+    def read(self) -> "_ReaderContext":
         return _ReaderContext(self)
 
-    async def write(self) -> "_WriterContext":
+    def write(self) -> "_WriterContext":
         return _WriterContext(self)
 
     async def acquire_reader(self):

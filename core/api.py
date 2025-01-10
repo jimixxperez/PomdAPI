@@ -16,11 +16,11 @@ from typing import (
 
 from pydantic import BaseModel, Field, TypeAdapter
 
+from core.caching import Cache
 from .types import (
     TResponse,
     BaseQueryConfig,
     EndpointDefinition,
-    CachingStrategy,
     ProvidesTags,
 )
 
@@ -82,7 +82,7 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
     endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen, ...]] = field(
         default_factory=dict
     )
-    cache_strategy: Optional[CachingStrategy[EndpointDefinitionGen, TResponse]] = None
+    cache: Optional[Cache[EndpointDefinitionGen, TResponse]] = None
 
     def base_query_fn(
         self, fn: Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]
@@ -281,10 +281,14 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         if endpoint is None or not endpoint.is_query:
             raise ValueError(f"No query endpoint named '{endpoint_name}' found.")
 
-        request_def = endpoint.request_fn(*args, **kwargs)
+        request_def_and_tags =  endpoint.request_fn(*args, **kwargs)
+        if isinstance(request_def_and_tags, tuple):
+            request_def, tags = request_def_and_tags
+        else:
+            request_def = request_def_and_tags
 
-        if self.cache_strategy:
-            cached_response = self.cache_strategy.get(endpoint_name, request_def)
+        if self.cache:
+            cached_response = self.cache.get_by_request(endpoint_name, request_def)
             if cached_response is not None:
                 return cached_response
 
@@ -297,8 +301,8 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
                     self.base_query_config, request_def
                 )
 
-                if self.cache_strategy:
-                    self.cache_strategy.set(
+                if self.cache:
+                    self.cache.set(
                         endpoint_name, request_def, response, endpoint.provides_tags
                     )
                 return response
@@ -306,8 +310,8 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
             return asyncio.ensure_future(_run())
 
         response = self.base_query_fn_handler(self.base_query_config, request_def)
-        if self.cache_strategy:
-            self.cache_strategy.set(
+        if self.cache:
+            self.cache.set(
                 endpoint_name, request_def, response, endpoint.provides_tags
             )
         return response
@@ -337,23 +341,27 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         if endpoint is None or not endpoint.is_mutation:
             raise ValueError(f"No mutation endpoint named '{endpoint_name}' found.")
 
-        request_def = endpoint.request_fn(*args, **kwargs)
+        request_def_and_tags = endpoint.request_fn(*args, **kwargs)
+        if isinstance(request_def_and_tags, tuple):
+            request_def, tags = request_def_and_tags
+        else:
+            request_def = request_def_and_tags
         assert self.base_query_fn_handler
         if is_async:
 
             async def _run() -> TResponse:
                 assert self.base_query_fn_handler_async is not None
                 response = await self.base_query_fn_handler_async(
-                    self.base_query_config, request_def
+                    self.base_query_config, request_def,
                 )
-                if endpoint.invalidates_tags and self.cache_strategy:
-                    self.cache_strategy.invalidate_tags(endpoint.invalidates_tags)
+                if self.cache:
+                    await self.cache.ainvalidate_tags(tags)
                 return response
 
             return asyncio.ensure_future(_run())
 
         response = self.base_query_fn_handler(self.base_query_config, request_def)
 
-        if endpoint.invalidates_tags and self.cache_strategy:
-            self.cache_strategy.invalidate_tags(endpoint.invalidates_tags)
+        if self.cache:
+            self.cache.invalidate_tags(tags)
         return response

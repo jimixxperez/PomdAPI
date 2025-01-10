@@ -1,9 +1,9 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Generic, Iterable, Protocol, Optional
 
-from core.api import EndpointDefinitionGen
-from core.types import TResponse, Tag
+from core.types import TResponse, Tag, EndpointDefinitionGen
+from core.rw_lock import AsyncRWLock
 
 
 class CacheBackend(Protocol[TResponse]):
@@ -47,6 +47,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
         endpoint_name: str,
         request: EndpointDefinitionGen,
     ) -> Optional[TResponse]:
+        """Get a response from the cache by request."""
         key = self.key_from_req(endpoint_name, request)
         return await self._backend.aget(key)
 
@@ -55,6 +56,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
         endpoint_name: str,
         tags: Iterable[str | Tag],
     ) -> Optional[TResponse]:
+        """Get a response from the cache by tags."""
         for tag in tags:
             key = self.key_from_tag(endpoint_name, tag)
             if response := self._backend.get(key):
@@ -65,6 +67,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
         endpoint_name: str,
         tags: Iterable[str | Tag],
     ) -> Optional[TResponse]:
+        """Get a response from the cache by tags."""
         for tag in tags:
             key = self.key_from_tag(endpoint_name, tag)
             if response := await self._backend.aget(key):
@@ -78,6 +81,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
         response: TResponse,
         ttl: Optional[int] = None,
     ) -> None:
+        """Set a response in the cache."""
         key = self.key_from_req(endpoint_name, request)
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self._backend.aset(key, response, ttl=ttl))
@@ -86,6 +90,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
                 tg.create_task(self._backend.aset(key, response, ttl=ttl))
 
     def invalidate_tags(self, endpoint_name: str, tags: Iterable[str | Tag]) -> None:
+        """Invalidate a response from the cache by tags."""
         for tag in tags:
             key = self.key_from_tag(endpoint_name, tag)
             self._backend.delete(key)
@@ -93,6 +98,7 @@ class Cache(Generic[EndpointDefinitionGen, TResponse]):
     async def ainvalidate_tags(
         self, endpoint_name: str, tags: Iterable[str | Tag]
     ) -> None:
+        """Invalidate a response from the cache by tags."""
         async with asyncio.TaskGroup() as tg:
             for tag in tags:
                 key = self.key_from_tag(endpoint_name, tag)
