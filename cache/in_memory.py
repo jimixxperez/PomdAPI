@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from typing import Generic, Iterable, Optional
 from core.types import (
@@ -9,28 +10,55 @@ from core.types import (
 from core.api import EndpointDefinitionGen
 from core.caching import Cache
 
+@dataclass
+class CachedItem(Generic[TResponse]):
+    value: TResponse
+    ttl: Optional[int]
+    timestamp: int
+
 
 class InMemoryBackend(Generic[TResponse]):
+    """In memory cache backend."""
     def __init__(self):
-        self._store: dict[str, TResponse] = {}
+        self._store: dict[str, CachedItem[TResponse]] = {}
 
     def delete(self, key: str) -> None:
+        """"Delete a key from the cache."""
         del self._store[key]
 
     async def adelete(self, key: str) -> None:
+        """"Delete a key from the cache."""
         return self.delete(key)
 
     def get(self, key: str) -> Optional[TResponse]:
-        return self._store.get(key)
+        """"Get a key from the cache."""
+        cached_item = self._store.get(key)
+        if cached_item is None:
+            return None
+
+        if cached_item.ttl is None or cached_item.timestamp is None:
+            return cached_item.value
+
+        timestamp = cached_item.timestamp
+        ttl = cached_item.ttl
+        req = cached_item.value
+        if timestamp + ttl < time.time():
+            self.delete(key)
+            return None
+        return req
+
 
     async def aget(self, key: str) -> Optional[TResponse]:
+        """"Get a key from the cache."""
         return self.get(key)
 
     def set(self, key: str, value: TResponse, ttl: Optional[int] = None) -> None:
-        self._store[key] = value
+        """"Set a key in the cache."""
+        self._store[key] = CachedItem(value, ttl, int(time.time()))
 
     async def aset(self, key: str, value: TResponse, ttl: Optional[int] = None) -> None:
-        self.set(key, value)
+        """"Set a key in the cache."""
+        self.set(key, value, ttl)
 
 
 class InMemoryCache(Cache[EndpointDefinitionGen, TResponse]):
