@@ -1,0 +1,51 @@
+site_name: API Library Documentation
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+    - Core API: api-reference/core.md
+    - HTTP API: api-reference/http.md
+    - JSON-RPC API: api-reference/jsonrpc.md
+    - XML-RPC API: api-reference/xmlrpc.md
+  - Caching:
+    - Overview: caching/overview.md
+    - In-Memory Cache: caching/in-memory.md
+    - Memcached: caching/memcached.md
+    - Redis: caching/redis.md
+  - Examples:
+    - GitHub API: examples/github.md
+    - Ethereum API: examples/ethereum.md
