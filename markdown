@@ -140,25 +140,104 @@ def create_user(user_data: CreateUserInput):
 ```
 # Core API Reference
 
+This section covers the core components of the API library.
+
 ## Api Class
 
-::: core.api.Api
+The `Api` class is the main entry point for creating and managing APIs. It provides decorators for defining query and mutation endpoints with built-in caching support.
+
+### Key Features
+
+- Type-safe endpoint definitions
+- Built-in caching support
+- Async/sync operation support
+- Automatic response validation
+
+### Example Usage
+
+```python
+from api.http import HttpApi
+from core.types import BaseQueryConfig
+
+api = HttpApi.from_defaults(
+    base_query_config=BaseQueryConfig(
+        base_url="https://api.example.com"
+    )
+)
+
+@api.query("getUser", response_type=User)
+def get_user(id: str):
+    return {"path": f"/users/{id}"}
+```
 
 ## BaseQueryConfig
 
-::: core.types.BaseQueryConfig
+The `BaseQueryConfig` class holds common configuration for all API requests.
+
+### Attributes
+
+- `base_url`: Base URL for all API requests
+- `prepare_headers`: Function to modify request headers
+
+### Example
+
+```python
+config = BaseQueryConfig(
+    base_url="https://api.example.com/v1",
+    prepare_headers=lambda headers: {
+        **headers,
+        "Authorization": f"Bearer {token}"
+    }
+)
+```
 
 ## EndpointDefinition
 
-::: core.types.EndpointDefinition
+The `EndpointDefinition` class represents a single API endpoint.
+
+### Properties
+
+- `is_query`: True if endpoint is a query
+- `is_mutation`: True if endpoint is a mutation
+- `request_fn`: Function that generates the request definition
 
 ## Cache
 
-::: core.caching.Cache
+The `Cache` class provides caching functionality for API responses.
+
+### Key Features
+
+- Tag-based cache invalidation
+- Support for TTL (Time To Live)
+- Async/sync operations
+
+### Example
+
+```python
+from cache.in_memory import InMemoryCache
+
+cache = InMemoryCache()
+api = HttpApi.from_defaults(
+    base_query_config=config,
+    cache=cache
+)
+```
 
 ## CacheBackend
 
-::: core.caching.CacheBackend
+The `CacheBackend` protocol defines the interface for cache implementations.
+
+### Required Methods
+
+- `get`/`aget`: Retrieve cached items
+- `set`/`aset`: Store items in cache
+- `delete`/`adelete`: Remove items from cache
+
+### Available Implementations
+
+- `InMemoryCache`: Simple in-memory caching
+- `MemcachedCache`: Distributed caching with Memcached
+- `RedisCache`: Redis-based caching
 # HTTP API Reference
 
 ## HttpApi

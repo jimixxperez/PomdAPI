@@ -33,8 +33,29 @@ ProvidesTags = (
 
 @dataclass
 class BaseQueryConfig:
-    """Defines the base query configuration for the API."""
+    """Defines the base configuration for all API requests.
+    
+    This class holds common configuration that applies to all requests made through
+    the API, such as base URL and header preparation.
 
+    Attributes:
+        base_url: The base URL for all API requests. If provided, this will be
+                 prepended to all request paths.
+        prepare_headers: A callable that takes and returns a headers dictionary.
+                       Use this to add authentication, content-type, or other
+                       headers to all requests.
+
+    Example:
+        ```python
+        config = BaseQueryConfig(
+            base_url="https://api.example.com/v1",
+            prepare_headers=lambda headers: {
+                **headers,
+                "Authorization": f"Bearer {token}"
+            }
+        )
+        ```
+    """
     base_url: Optional[str] = None
     prepare_headers: Callable[[dict[str, str]], dict[str, str]] = field(
         default_factory=lambda: lambda header: header

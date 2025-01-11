@@ -73,6 +73,29 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
     """
     The Api class is the main entry point for interacting with the API.
     It provides a simple interface for defining query and mutation endpoints.
+
+    This class is generic over two type parameters:
+    - EndpointDefinitionGen: The type of request definition (e.g., HTTP request, RPC request)
+    - TResponse: The type of response returned by the API
+
+    Attributes:
+        base_query_config: Configuration for all API requests
+        base_query_fn_handler: Synchronous function to execute requests
+        base_query_fn_handler_async: Asynchronous function to execute requests
+        endpoints: Dictionary mapping endpoint names to their definitions
+        cache: Optional cache implementation for responses
+
+    Example:
+        ```python
+        api = Api(
+            base_query_config=BaseQueryConfig(base_url="https://api.example.com"),
+            cache=InMemoryCache()
+        )
+
+        @api.query("getUser", response_type=User)
+        def get_user(id: str):
+            return {"path": f"/users/{id}"}
+        ```
     """
 
     base_query_config: BaseQueryConfig

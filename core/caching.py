@@ -7,19 +7,44 @@ from core.rw_lock import AsyncRWLock
 
 
 class CacheBackend(Protocol):
-    def delete(self, key: str) -> None: ...
+    """Protocol defining the interface for cache backends.
+    
+    Implementations must provide both synchronous and asynchronous methods
+    for basic cache operations (get, set, delete).
 
-    async def adelete(self, key: str) -> None: ...
+    Methods:
+        delete: Synchronously remove an item from cache
+        adelete: Asynchronously remove an item from cache
+        get: Synchronously retrieve an item from cache
+        aget: Asynchronously retrieve an item from cache
+        set: Synchronously store an item in cache with optional TTL
+        aset: Asynchronously store an item in cache with optional TTL
+    """
+    def delete(self, key: str) -> None:
+        """Synchronously delete a cache entry by key."""
+        ...
 
-    def get(self, key: str) -> Optional[Any]: ...
+    async def adelete(self, key: str) -> None:
+        """Asynchronously delete a cache entry by key."""
+        ...
 
-    async def aget(self, key: str) -> Optional[Any]: ...
+    def get(self, key: str) -> Optional[Any]:
+        """Synchronously get a cache entry by key."""
+        ...
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None: ...
+    async def aget(self, key: str) -> Optional[Any]:
+        """Asynchronously get a cache entry by key."""
+        ...
+
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """Synchronously set a cache entry with optional TTL in seconds."""
+        ...
 
     async def aset(
         self, key: str, value: Any, ttl: Optional[int] = None
-    ) -> None: ...
+    ) -> None:
+        """Asynchronously set a cache entry with optional TTL in seconds."""
+        ...
 
 
 @dataclass
