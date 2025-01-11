@@ -138,3 +138,42 @@ def create_user(user_data: CreateUserInput):
         "body": user_data.dict()
     }
 ```
+# Core API Reference
+
+## Api Class
+
+::: core.api.Api
+
+## BaseQueryConfig
+
+::: core.types.BaseQueryConfig
+
+## EndpointDefinition
+
+::: core.types.EndpointDefinition
+
+## Cache
+
+::: core.caching.Cache
+
+## CacheBackend
+
+::: core.caching.CacheBackend
+# HTTP API Reference
+
+## HttpApi
+
+::: api.http.HttpApi
+
+## Request Models
+
+::: api.http.RequestDefinition
+# JSON-RPC API Reference
+
+## JSONRPCRequest
+
+::: api.jsonrpc.JSONRPCRequest
+
+## JSONRPCResponse
+
+::: api.jsonrpc.JSONRPCResponse
