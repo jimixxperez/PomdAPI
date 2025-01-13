@@ -7,7 +7,7 @@ This guide will help you get started with the API library.
 First, install the package using pip:
 
 ```bash
-pip install your-package-name
+pip install papperlapi 
 ```
 
 ## Basic Usage

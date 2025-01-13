@@ -124,7 +124,6 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         self,
         name: str,
         response_type: Type[ResponseType],
-        provides_tags: Optional[list[str]] = None,
     ) -> Callable[
         [
             Callable[QueryParam, EndpointDefinitionGen]
