@@ -62,7 +62,7 @@ async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any
     return response.json()
 
 
-class HttpApi(Api[RequestDefinition, Any]):
+class HttpApi(Api[RequestDefinition, BaseQueryConfig, Any]):
     @classmethod
     def from_defaults(
         cls,

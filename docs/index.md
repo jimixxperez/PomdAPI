@@ -20,14 +20,6 @@ Whether you’re building a small prototype or a large-scale service, these feat
 To learn more about each feature, check out our [Features](features.md) page or dive straight into the [Getting Started](getting-started.md) guide.
 
 
-### Features
-#
-- 🚀 Support for multiple API protocols
-- 💾 Built-in caching with multiple backends
-- ⚡ Async and sync operations
-- 🔒 Type-safe API definitions
-- 🎯 Easy to use decorators for queries and mutations
-
 ## Installation
 
 ```bash

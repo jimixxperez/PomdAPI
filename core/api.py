@@ -10,6 +10,7 @@ from typing import (
     ParamSpec,
     Protocol,
     Type,
+    TypeAlias,
     TypeVar,
     Concatenate,
     Coroutine,
@@ -18,10 +19,11 @@ from typing import (
 
 from pydantic import BaseModel, Field, TypeAdapter
 
+from api.http import RequestDefinition
 from core.caching import Cache
 from .types import (
-    TResponse,
-    BaseQueryConfig,
+    #TResponse,
+    #BaseQueryConfig,
     EndpointDefinition,
     ProvidesTags,
 )
@@ -30,6 +32,7 @@ from .types import (
 QueryParam = ParamSpec("QueryParam")
 ResponseType = TypeVar("ResponseType")
 QueryResponse = TypeVar("QueryResponse")
+BaseQueryConfig = TypeVar("BaseQueryConfig", contravariant=True)
 
 
 import asyncio
@@ -65,11 +68,18 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
         ...
 
 
-EndpointDefinitionGen = TypeVar("EndpointDefinitionGen")
+EndpointDefinitionGen = TypeVar("EndpointDefinitionGen", contravariant=True)
+TResponse = TypeVar("TResponse", covariant=True)
+EndpointName: TypeAlias = str
+BaseQueryFn = Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse] | Callable[[BaseQueryConfig, EndpointDefinitionGen, EndpointName], TResponse]
+BaseQueryFnAsync = Callable[[BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]] | Callable[[BaseQueryConfig, EndpointDefinitionGen, EndpointName], Coroutine[None, None, TResponse]]
+
+
+
 
 
 @dataclass
-class Api(Generic[EndpointDefinitionGen, TResponse]):
+class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
     """
     The Api class is the main entry point for interacting with the API.
     It provides a simple interface for defining query and mutation endpoints.
@@ -98,23 +108,18 @@ class Api(Generic[EndpointDefinitionGen, TResponse]):
         ```
     """
 
+
     base_query_config: BaseQueryConfig
-    base_query_fn_handler: Optional[
-        Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]
-    ] = None
-    base_query_fn_handler_async: Optional[
-        Callable[
-            [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
-        ]
-    ] = None
+    base_query_fn_handler: BaseQueryFn[BaseQueryConfig, EndpointDefinitionGen, TResponse] | None = None
+    base_query_fn_handler_async: Optional[ BaseQueryFnAsync[BaseQueryConfig, EndpointDefinitionGen, TResponse]] = None
     endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
         default_factory=dict
     )
     cache: Optional[Cache[EndpointDefinitionGen, TResponse]] = None
 
     def base_query_fn(
-        self, fn: Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]
-    ) -> Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]:
+        self, fn: BaseQueryFn[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+    ) -> BaseQueryFn[BaseQueryConfig, EndpointDefinitionGen, TResponse]:
         """Decorator to register a base query function."""
         if not self.base_query_fn_handler:
             self.base_query_fn_handler = fn

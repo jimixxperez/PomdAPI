@@ -1,18 +1,19 @@
 import httpx
 from typing import TypeAlias, TypedDict, Required, Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl, TypeAdapter
 
 from core.api import Api
-from core.types import BaseQueryConfig, CachingStrategy
+from core.caching import Cache
 
 
-class RequestDefinition(TypedDict, total=False):
-    """Defines a request for the JSON-RPC API"""
+RequestDefinition: TypeAlias = dict[str, Any] | list[Any]
 
-    id: Optional[int]
-    method: Required[str]
-    params: Required[dict[str, Any] | list[Any]]
+
+class BaseQueryConfig(BaseModel):
+    """Defines the base configuration for all API requests."""
+
+    base_url: HttpUrl
 
 
 JSONRPCId: TypeAlias = Optional[str | int]
@@ -38,19 +39,21 @@ class JSONRPCResponse(BaseModel):
     id: JSONRPCId
 
 
-def base_query_fn(config: BaseQueryConfig, req: RequestDefinition):
+def base_query_fn(
+    config: BaseQueryConfig, req: RequestDefinition, endpoint_name: str
+) -> Any:
     req_url = config.base_url
     assert req_url is not None
     json_payload = JSONRPCRequest(
-                jsonrpc="2.0",
-                id=1,
-                method=req["method"],
-                params=req["params"],
-            ).model_dump()
-    #import pdb; pdb.set_trace()
+        jsonrpc="2.0",
+        id=1,
+        method=endpoint_name,
+        params=req,
+    ).model_dump()
+    # import pdb; pdb.set_trace()
     response = httpx.request(
         method="POST",
-        url=req_url,
+        url=str(req_url),
         json=json_payload,
     )
     response.raise_for_status()
@@ -58,18 +61,20 @@ def base_query_fn(config: BaseQueryConfig, req: RequestDefinition):
     return jsonrpc_response.result
 
 
-async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition):
+async def abase_query_fn(
+    config: BaseQueryConfig, req: RequestDefinition, endpoint_name: str
+):
     req_url = config.base_url
     assert req_url is not None
     async with httpx.AsyncClient() as client:
         request = client.build_request(
             method="POST",
-            url=req_url,
+            url=str(req_url),
             json=JSONRPCRequest(
                 jsonrpc="2.0",
                 id=1,
-                method=req["method"],
-                params=req["params"],
+                method=endpoint_name,
+                params=req,
             ).model_dump(),
         )
         response = await client.send(request)
@@ -79,17 +84,16 @@ async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition):
     return jsonrpc_response.result
 
 
-class JSONRPCApi(Api[RequestDefinition, Any]):
+class JSONRPCApi(Api[RequestDefinition, BaseQueryConfig, Any]):
     @classmethod
     def from_defaults(
         cls,
         base_query_config: BaseQueryConfig,
-        caching_strategy: Optional[
-            CachingStrategy[RequestDefinition, Any]
-        ] = None,
+        cache: Optional[Cache[RequestDefinition, Any]] = None,
     ):
         return cls(
             base_query_config=base_query_config,
             base_query_fn_handler=base_query_fn,
             base_query_fn_handler_async=abase_query_fn,
+            cache=cache,
         )

@@ -90,7 +90,7 @@ class CacheEntry(Generic[TResponse]):
     timestamp: float
 
 
-class SyncCachingStrategy(Protocol[EndpointDefinitionGen, TResponse]):
+class yncCachingStrategy(Protocol[EndpointDefinitionGen, TResponse]):
     """Defines a caching strategy for the API."""
 
     def get(

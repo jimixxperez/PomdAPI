@@ -1,37 +1,43 @@
 from typing import Optional
 
-from core.types import BaseQueryConfig
-from api.jsonrpc import RequestDefinition, JSONRPCApi
+from pydantic import HttpUrl
+
+from api.jsonrpc import RequestDefinition, JSONRPCApi, BaseQueryConfig
 
 ethereum_api = JSONRPCApi.from_defaults(
     base_query_config=BaseQueryConfig(
-        base_url="https://docs-demo.quiknode.pro",
+        base_url=HttpUrl("https://docs-demo.quiknode.pro"),
     ),
 )
 
-@ethereum_api.query(name="getBalance", response_type=bytes)
-def get_balance(eth_address: str, quantity_tag: str = "latest") -> RequestDefinition:
+
+@ethereum_api.query(name="eth_getBalance", response_type=bytes)
+def get_balance(eth_address: str, quantity_tag: str = "latest"):
     """Gets the balance of an address"""
-    return {"method": "eth_getBalance", "params": [eth_address, quantity_tag]}
+    return [eth_address, quantity_tag]
 
 
-@ethereum_api.query(name="call", response_type=str)
-def call(_from: bytes, _to: bytes, gas: Optional[int] = None, gas_prices: Optional[int] = None, ) -> RequestDefinition:
+@ethereum_api.query(name="eth_Call", response_type=str)
+def call(
+    _from: bytes,
+    _to: bytes,
+    gas: Optional[int] = None,
+    gas_prices: Optional[int] = None,
+):
     """Calls a contract"""
     return {
-        "method": "eth_call", 
-        "params": {
-            "from": _from,
-            "to": _to,
-            "gas": gas,
-            "gas_prices": gas_prices,
-        }
+        "from": _from,
+        "to": _to,
+        "gas": gas,
+        "gas_prices": gas_prices,
     }
 
-@ethereum_api.query(name="getGasPrice", response_type=str)
-def get_gas_price() -> RequestDefinition:
+
+@ethereum_api.query(name="eth_gasPrice", response_type=str)
+def get_gas_price():
     """Gets the current gas price"""
-    return {"method": "eth_gasPrice", "params": []}
+    return []
+
 
 if __name__ == "__main__":
     balance = get_balance(
@@ -42,4 +48,3 @@ if __name__ == "__main__":
 
     gas_price = int(get_gas_price(is_async=False), 16)
 
-    import pdb; pdb.set_trace()
