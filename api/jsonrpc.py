@@ -1,7 +1,7 @@
 import httpx
-from typing import TypeAlias, TypedDict, Required, Any, Optional
+from typing import TypeAlias, Any, Optional
 
-from pydantic import BaseModel, HttpUrl, TypeAdapter
+from pydantic import BaseModel, HttpUrl
 
 from core.api import Api
 from core.caching import Cache

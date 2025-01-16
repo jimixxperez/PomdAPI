@@ -1,9 +1,8 @@
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Generic, Iterable, Protocol, Optional
 
 from core.types import TResponse, Tag, EndpointDefinitionGen
-from core.rw_lock import AsyncRWLock
 
 
 class CacheBackend(Protocol):

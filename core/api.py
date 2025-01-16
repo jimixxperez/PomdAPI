@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import dataclass, field
 from functools import wraps
 from typing import (
@@ -11,19 +12,18 @@ from typing import (
     Protocol,
     Type,
     TypeAlias,
+    TypeIs,
     TypeVar,
-    Concatenate,
     Coroutine,
     cast,
 )
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 
-from api.http import RequestDefinition
 from core.caching import Cache
 from .types import (
-    #TResponse,
-    #BaseQueryConfig,
+    # TResponse,
+    # BaseQueryConfig,
     EndpointDefinition,
     ProvidesTags,
 )
@@ -36,7 +36,7 @@ BaseQueryConfig = TypeVar("BaseQueryConfig", contravariant=True)
 
 
 import asyncio
-from typing import overload, Awaitable, Literal, Annotated
+from typing import overload
 
 
 class SyncAsync(Protocol[QueryParam, QueryResponse]):
@@ -71,11 +71,34 @@ class SyncAsync(Protocol[QueryParam, QueryResponse]):
 EndpointDefinitionGen = TypeVar("EndpointDefinitionGen", contravariant=True)
 TResponse = TypeVar("TResponse", covariant=True)
 EndpointName: TypeAlias = str
-BaseQueryFn = Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse] | Callable[[BaseQueryConfig, EndpointDefinitionGen, EndpointName], TResponse]
-BaseQueryFnAsync = Callable[[BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]] | Callable[[BaseQueryConfig, EndpointDefinitionGen, EndpointName], Coroutine[None, None, TResponse]]
+
+BaseQueryFnArity2 = Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]
+BaseQueryFnArity3 = Callable[[BaseQueryConfig, EndpointDefinitionGen, EndpointName], TResponse]
+BaseQueryFn = BaseQueryFnArity2[BaseQueryConfig, EndpointDefinitionGen, TResponse] | BaseQueryFnArity3[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+
+BaseQueryFnAsyncArity2 = Callable[
+    [BaseQueryConfig, EndpointDefinitionGen], Coroutine[None, None, TResponse]
+]
+BaseQueryFnAsyncArity3 = Callable[
+    [BaseQueryConfig, EndpointDefinitionGen, EndpointName],
+    Coroutine[None, None, TResponse],
+]
+
+BaseQueryFnAsync: TypeAlias = BaseQueryFnAsyncArity2[BaseQueryConfig, EndpointDefinitionGen, TResponse] | BaseQueryFnAsyncArity3[BaseQueryConfig, EndpointDefinitionGen, TResponse]
 
 
+def is_base_query_fn_arity_2(
+    fn: BaseQueryFn[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+) -> TypeIs[Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse]]:
+    return isinstance(fn, Callable) and len(inspect.signature(fn).parameters) == 2
 
+
+def is_base_query_fn_async_arity_2(
+    fn: BaseQueryFnAsync[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+) -> TypeIs[
+    BaseQueryFnAsyncArity2[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+]:
+    return isinstance(fn, Callable) and len(inspect.signature(fn).parameters) == 3
 
 
 @dataclass
@@ -108,10 +131,13 @@ class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
         ```
     """
 
-
     base_query_config: BaseQueryConfig
-    base_query_fn_handler: BaseQueryFn[BaseQueryConfig, EndpointDefinitionGen, TResponse] | None = None
-    base_query_fn_handler_async: Optional[ BaseQueryFnAsync[BaseQueryConfig, EndpointDefinitionGen, TResponse]] = None
+    base_query_fn_handler: BaseQueryFn[
+        BaseQueryConfig, EndpointDefinitionGen, TResponse
+    ] | None = None
+    base_query_fn_handler_async: Optional[
+        BaseQueryFnAsync[BaseQueryConfig, EndpointDefinitionGen, TResponse]
+    ] = None
     endpoints: dict[str, EndpointDefinition[EndpointDefinitionGen]] = field(
         default_factory=dict
     )
@@ -432,9 +458,14 @@ class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
 
             async def _run() -> TResponse:
                 assert self.base_query_fn_handler_async is not None
-                response = await self.base_query_fn_handler_async(
-                    self.base_query_config, request_def
-                )
+                if is_base_query_fn_async_arity_2(self.base_query_fn_handler_async):
+                    response = await self.base_query_fn_handler_async(
+                        self.base_query_config, request_def
+                    )
+                else:
+                    response = await self.base_query_fn_handler_async(
+                        self.base_query_config, request_def, endpoint_name # type: ignore
+                    ) 
 
                 if self.cache:
                     await self.cache.aset(
@@ -447,7 +478,21 @@ class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
 
             return asyncio.ensure_future(_run())
 
-        response = self.base_query_fn_handler(self.base_query_config, request_def)
+        # GET Number of parameters
+        # fn_sig = inspect.signature(self.base_query_fn_handler)
+        if is_base_query_fn_arity_2(self.base_query_fn_handler):
+            response = self.base_query_fn_handler(self.base_query_config, request_def)
+        else:
+            response = self.base_query_fn_handler(
+                self.base_query_config, request_def, endpoint_name # type: ignore
+            )
+        # if len(fn_sig.parameters) == 3:
+        #    fn = cast(Callable[[BaseQueryConfig, EndpointDefinitionGen, str], TResponse], self.base_query_fn_handler)
+        #    response = fn(self.base_query_config, request_def, endpoint_name)
+        # else:
+        #    fn = cast(Callable[[BaseQueryConfig, EndpointDefinitionGen], TResponse], self.base_query_fn_handler)
+        #    response = fn(self.base_query_config, request_def)
+
         if self.cache:
             self.cache.set(
                 endpoint_name=endpoint_name,
@@ -500,10 +545,17 @@ class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
 
             async def _run() -> TResponse:
                 assert self.base_query_fn_handler_async is not None
-                response = await self.base_query_fn_handler_async(
-                    self.base_query_config,
-                    request_def,
-                )
+                if is_base_query_fn_async_arity_2(self.base_query_fn_handler_async):
+                    response = await self.base_query_fn_handler_async(
+                        self.base_query_config,
+                        request_def,
+                    )
+                else:
+                    response = await self.base_query_fn_handler_async(
+                        self.base_query_config,
+                        request_def,
+                        endpoint_name, # type: ignore
+                    )
                 if self.cache and tags:
                     await self.cache.ainvalidate_tags(
                         endpoint_name=endpoint_name,
@@ -513,7 +565,12 @@ class Api(Generic[EndpointDefinitionGen, BaseQueryConfig, TResponse]):
 
             return asyncio.ensure_future(_run())
 
-        response = self.base_query_fn_handler(self.base_query_config, request_def)
+        if is_base_query_fn_arity_2(self.base_query_fn_handler):
+            response = self.base_query_fn_handler(self.base_query_config, request_def)
+        else:
+            response = self.base_query_fn_handler(
+                self.base_query_config, request_def, endpoint_name # type: ignore
+            )
 
         if self.cache and tags:
             self.cache.invalidate_tags(

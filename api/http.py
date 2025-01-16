@@ -1,7 +1,7 @@
 import httpx
 
 from dataclasses import dataclass, field
-from typing import TypedDict, Required, Optional, Any, Literal
+from typing import Optional, Any, Literal
 from core.api import Api
 from core.caching import Cache
 from core.types import BaseQueryConfig

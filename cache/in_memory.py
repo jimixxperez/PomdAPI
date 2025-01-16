@@ -1,11 +1,8 @@
 import time
 from dataclasses import dataclass
-from typing import Any, Generic, Iterable, Optional
+from typing import Any, Generic, Optional
 from core.types import (
-    SyncCachingStrategy,
-    AyncCachingStrategy,
     TResponse,
-    Tag,
 )
 from core.api import EndpointDefinitionGen
 from core.caching import Cache

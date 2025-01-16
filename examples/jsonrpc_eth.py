@@ -1,14 +1,21 @@
+import sys
+from pathlib import Path
 from typing import Optional
 
-from pydantic import HttpUrl
+sys.path.append(str(Path(__file__).parent.parent))
 
-from api.jsonrpc import RequestDefinition, JSONRPCApi, BaseQueryConfig
+
+from api.jsonrpc import JSONRPCApi, BaseQueryConfig
 
 ethereum_api = JSONRPCApi.from_defaults(
     base_query_config=BaseQueryConfig(
-        base_url=HttpUrl("https://docs-demo.quiknode.pro"),
+        base_url="https://docs-demo.quiknode.pro",
     ),
 )
+print("""
+    In this setup, the endpoint_name corresponds to jsonrpc method
+    and decorated function should return the parameters
+""")
 
 
 @ethereum_api.query(name="eth_getBalance", response_type=bytes)
@@ -45,6 +52,8 @@ if __name__ == "__main__":
         eth_address="0x8D97689C9818892B700e27F316cc3E41e17fBeb9",
         quantity_tag="latest",
     )
+    print("balance:", balance)
 
     gas_price = int(get_gas_price(is_async=False), 16)
+    print("current gas_price:", gas_price)
 
