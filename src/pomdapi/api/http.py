@@ -2,9 +2,9 @@ import httpx
 
 from dataclasses import dataclass, field
 from typing import Optional, Any, Literal
-from core.api import Api
-from core.caching import Cache
-from core.types import BaseQueryConfig
+from pomdapi.core.api import Api
+from pomdapi.core.caching import Cache
+from pomdapi.core.types import BaseQueryConfig
 
 
 @dataclass

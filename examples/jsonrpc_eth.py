@@ -2,10 +2,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-sys.path.append(str(Path(__file__).parent.parent))
 
-
-from api.jsonrpc import JSONRPCApi, BaseQueryConfig
+from pomdapi.api.jsonrpc import JSONRPCApi, BaseQueryConfig
 
 ethereum_api = JSONRPCApi.from_defaults(
     base_query_config=BaseQueryConfig(

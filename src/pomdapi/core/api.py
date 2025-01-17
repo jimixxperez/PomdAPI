@@ -12,18 +12,17 @@ from typing import (
     Protocol,
     Type,
     TypeAlias,
-    TypeIs,
     TypeVar,
     Coroutine,
     cast,
 )
+    
+from typing_extensions import TypeIs
 
 from pydantic import BaseModel, TypeAdapter
 
-from core.caching import Cache
-from .types import (
-    # TResponse,
-    # BaseQueryConfig,
+from pomdapi.core.caching import Cache
+from pomdapi.core.types import (
     EndpointDefinition,
     ProvidesTags,
 )

@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any, Generic, Iterable, Protocol, Optional
 
-from core.types import TResponse, Tag, EndpointDefinitionGen
+from pomdapi.core.types import TResponse, Tag, EndpointDefinitionGen
 
 
 class CacheBackend(Protocol):

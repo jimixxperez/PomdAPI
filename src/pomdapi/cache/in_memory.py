@@ -1,11 +1,11 @@
 import time
 from dataclasses import dataclass
 from typing import Any, Generic, Optional
-from core.types import (
+from pomdapi.core.types import (
     TResponse,
 )
-from core.api import EndpointDefinitionGen
-from core.caching import Cache
+from pomdapi.core.api import EndpointDefinitionGen
+from pomdapi.core.caching import Cache
 
 @dataclass
 class CachedItem(Generic[TResponse]):

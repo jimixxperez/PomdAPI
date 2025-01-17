@@ -5,9 +5,9 @@ from typing import Any, Optional, Generic, Union
 import memcache          # synchronous client
 import aiomcache         # asynchronous client
 
-from core.types import TResponse
-from core.api import EndpointDefinitionGen
-from core.caching import Cache
+from pomdapi.core.types import TResponse
+from pomdapi.core.api import EndpointDefinitionGen
+from pomdapi.core.caching import Cache
 
 
 @dataclass

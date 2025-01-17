@@ -1,10 +1,10 @@
 import os
 from typing import Literal
 from pydantic import BaseModel
-from core.types import Tag
-from api.http import HttpApi, RequestDefinition
-from cache.in_memory import InMemoryCache
-from core.types import BaseQueryConfig
+from pomdapi.core.types import Tag
+from pomdapi.api.http import HttpApi, RequestDefinition
+from pomdapi.cache.in_memory import InMemoryCache
+from pomdapi.core.types import BaseQueryConfig
 
 GITHUB_BASE_URL = "https://api.github.com"
 GITHUB_TOKEN =   os.environ["GITHUB_TOKEN"]

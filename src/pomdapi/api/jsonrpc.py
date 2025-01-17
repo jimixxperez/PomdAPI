@@ -3,8 +3,8 @@ from typing import TypeAlias, Any, Optional
 
 from pydantic import BaseModel, HttpUrl
 
-from core.api import Api
-from core.caching import Cache
+from pomdapi.core.api import Api
+from pomdapi.core.caching import Cache
 
 
 RequestDefinition: TypeAlias = dict[str, Any] | list[Any]
