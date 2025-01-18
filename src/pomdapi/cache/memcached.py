@@ -2,8 +2,6 @@ import json
 from dataclasses import dataclass
 from typing import Any, Optional, Generic, Union
 
-import memcache          # synchronous client
-import aiomcache         # asynchronous client
 
 from pomdapi.core.types import TResponse
 from pomdapi.core.api import EndpointDefinitionGen
@@ -54,7 +52,7 @@ class MemcachedBackend:
         text = raw_data.decode("utf-8", errors="replace")
         # Attempt to parse JSON; if it fails, treat as plain string.
         try:
-            return json.loads(text)
+#            return json.loads(text)
         except json.JSONDecodeError:
             return text
 

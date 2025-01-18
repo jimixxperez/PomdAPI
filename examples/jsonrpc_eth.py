@@ -1,7 +1,4 @@
-import sys
-from pathlib import Path
 from typing import Optional
-
 
 from pomdapi.api.jsonrpc import JSONRPCApi, BaseQueryConfig
 
@@ -15,7 +12,7 @@ print("""
     and decorated function should return the parameters
 """)
 
-
+# NOTE: Endpoint name  corresponds to jsonrpc method
 @ethereum_api.query(name="eth_getBalance", response_type=bytes)
 def get_balance(eth_address: str, quantity_tag: str = "latest"):
     """Gets the balance of an address"""

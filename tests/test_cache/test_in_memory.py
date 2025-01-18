@@ -1,5 +1,5 @@
 import pytest
-from pomdapi.cache.in_memory import InMemoryCache, InMemoryBackend
+from pomdapi.cache.in_memory import InMemoryBackend
 from typing import Optional, Any
 
 @pytest.mark.parametrize("key,value,ttl", [

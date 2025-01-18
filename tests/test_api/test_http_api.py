@@ -1,7 +1,6 @@
 import pytest
 from pomdapi.api.http import HttpApi, BaseQueryConfig, RequestDefinition
 from pydantic import BaseModel
-from typing import Optional
 
 class TestResponse(BaseModel):
     message: str

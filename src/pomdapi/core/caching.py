@@ -49,6 +49,7 @@ class CacheBackend(Protocol):
 @dataclass
 class Cache(Generic[EndpointDefinitionGen, TResponse]):
     _backend: CacheBackend
+    _ttl: int = 60
 
     @staticmethod
     def key_from_req(endpoint_name: str, request: EndpointDefinitionGen) -> str:
