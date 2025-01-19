@@ -48,7 +48,10 @@ if __name__ == "__main__":
         quantity_tag="latest",
     )
     print("balance:", balance)
-
+    
+    import asyncio
+    loop = asyncio.get_event_loop()
+    gas_price = loop.run_until_complete(get_gas_price())
     gas_price = int(get_gas_price(is_async=False), 16)
     print("current gas_price:", gas_price)
 

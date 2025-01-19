@@ -1,36 +1,48 @@
-# API Library Documentation
+# Introduction
 
-# Papperlapi
+## PomdAPI 
+**PomdAPI** is a Python library built to bring a **FastAPI-style** developer experience to creating strongly-typed API clients. 
 
-**Papperlapi** is a lightweight, Pythonic solution for creating strongly-typed API clients. 
-It supports synchronous and asynchronous calls out of the box, offers powerful tag-based caching 
-to manage invalidations, and integrates seamlessly with frameworks like Pydantic for request/response models.
+We love the clarity and ergonomics FastAPI introduced for web apps, especially with its Pydantic-based approach. But when we needed a similar, no-nonsense way to define and manage multi-protocol API calls—HTTP, JSON-RPC, XML-RPC—we couldn’t find anything that “just worked” without getting tangled in repetitive logic.
 
-## Key Features
+So we built PomdAPI with one simple goal:
 
--  🎯 **Easy Definition of Endpoints**: Decorate query and mutation functions to define your API calls. 
-- **🚀 Support for multiple API protocols**: HTTP, JSON-RPC or any custom protocol.
-- 🔒 **Typed Responses**: Use `pydantic.BaseModel` or native Python types to ensure strict typing.
-- ⚡ **Automatic Sync/Async**: The same function can be called synchronously or asynchronously, no code duplication required.
-- 🔖 **Tag-Based Caching**: Invalidate entire lists or single items via tags.
-- 💾 **Extensible Caching Backends**: In-memory, Memcached, Redis, or any custom backend implementing `CacheBackend`.
+deliver that same clean, efficient feeling to any kind of API interaction. Whether you prefer sync or async, need caching and invalidation, or want a clear, typed model for requests and responses, PomdAPI aims to make it all painless and Pythonic. We hope it becomes your go-to solution for taming multi-protocol APIs with minimal fuss.
 
-Whether you’re building a small prototype or a large-scale service, these features help keep your code clean, consistent, and reliable. For more hands-on guides, check out our Getting Started page or explore the Examples of how you can integrate papperlapi into real-world projects.
+## Why use PomdAPI?
+
+ 🎯 <strong class="vertical-middle"> Declarative Endpoints</strong><br>
+Define your queries and mutations in a single, clear place using decorators. This means you can outline how to fetch or update data—whether it’s GitHub issues or Ethereum balances—without repeating request logic.
+
+🚀 <strong class="vertical-middle"> Pluggable Protocols</strong><br>
+Enjoy out-of-the-box support for HTTP, JSON-RPC, and XML-RPC calls, with a straightforward pattern for adding any custom protocol. All protocols share the same consistent API interface, so you can reuse logic and tooling across diverse data sources.
+
+🔒 <strong class="vertical-middle"> Built-In Caching</strong><br>
+Built with Python type hints and Pydantic models, giving you both compile-time checks and runtime validation. This helps prevent bugs and ensures predictable data structures across your codebase.
+
+⚡ <strong class="vertical-middle"> Automatic Sync/Async</strong><br>
+Use the same function in synchronous or asynchronous contexts—no code duplication necessary. Whether you’re in a simple script or an async-based web framework, the library adapts seamlessly.
+
+🔖 <strong class="vertical-middle"> Tag-Based Invalidation</strong><br>
+Speed up your application by reducing unnecessary requests and handling partial data updates. Choose from in-memory, Memcached, Redis, or implement your own custom caching backend.
+
+🔖 <strong class="vertical-middle"> Expandable Architecture</strong><br>
+Assign tags to endpoints, then invalidate entire lists or single items by tag. This makes cache updates straightforward and more maintainable for dynamic data.
+
+Whether you’re building a small prototype or a large-scale service, these features help keep your code clean, consistent, and reliable. For more hands-on guides, check out our Getting Started page or explore the Examples of how you can integrate PomdAPI into real-world projects.
 
 To learn more about each feature, check out our [Features](features.md) page or dive straight into the [Getting Started](getting-started.md) guide.
 
 
-## Installation
-
-```bash
-pip install your-package-name
-```
-
 ## Quick Start
 
+!!! example "In Beta"
+    PomdAPI is in early beta, the API might be still subject to change.
+
+
 ```python
-from api.http import HttpApi
-from cache.in_memory import InMemoryCache
+from pomdapi.api.http import HttpApi, RequestDefinition
+from pomdapi.cache.in_memory import InMemoryCache
 
 # Create an API instance with in-memory caching
 api = HttpApi.from_defaults(
@@ -38,42 +50,37 @@ api = HttpApi.from_defaults(
     cache=InMemoryCache()
 )
 
+# Define deserialized response type
+class UserProfile(BaseModel):
+    id_: str = Field(alias="id")
+    name: str
+    age: int
+
 # Define a query endpoint
 @api.query("getUserProfile", response_type=UserProfile)
 def get_user_profile(user_id: str):
-    return {"path": f"/users/{user_id}"}
+    return RequestDefinition(
+        method="GET",
+        url=f"/users/{user_id}"
+    )
 
-# Use the API
+
+# Use the function in the default async context
 async def main():
-    profile = await get_user_profile(is_async=True, user_id="123")
+    profile = await get_user_profile(user_id="123") 
+    print(profile)
+
+# or in a sync context
+def main():
+    profile = get_user_profile(is_async=False, user_id="123")
     print(profile)
 ```
-## Motiviation
 
-Modern web applications often rely on data from remote APIs, and keeping that data in sync with the server can be challenging. You need to track loading states, prevent duplicate requests, handle optimistic updates, and manage cache lifetimes, among many other tasks. This library, inspired in part by RTK Query’s philosophy, aims to simplify data fetching and caching so you can focus on building features instead of reinventing boilerplate or manually handling these complexities.
-Why This Library?
-
-Historically, Python-based solutions for fetching data and caching within a UI or application have required significant custom logic: you’d write manual request handling, caching layers, and code to invalidate or refetch data. This library abstracts those common requirements:
-
- - **Declarative Endpoints**
-  Define your endpoints (queries and mutations) in one place. For example, you might describe how to fetch GitHub issues or an Ethereum account balance, without worrying about repetitive request code each time.
-
- - **Built-In Caching**
-    Reduce unneeded requests and handle partial data updates through out-of-the-box caching. You can choose among in-memory, Memcached, or Redis backends to fit your caching needs.
-
- - **Sync or Async**
-    APIs and cache operations can be run synchronously or asynchronously, powered by Python’s async/await. This means you can integrate the library into both traditional blocking contexts (like simple scripts) and async-based web frameworks.
-
- - **Pluggable Protocols**
-    The library includes handlers for multiple request protocols such as HTTP, JSON-RPC, and XML-RPC, with easy patterns to add more. Each API type uses the same Api base, so you can take advantage of a consistent interface regardless of protocol.
-
- - **Type-Safe**
-    Built using Python’s type hints and Pydantic models, so you get compile-time checks and runtime validation. This reduces bugs and makes the data structures you pass around more predictable.
-
-FastAPI vs. PomdAPI: An Inversion
+## FastAPI vs. PomdAPI: An Inversion
 
 FastAPI is a server framework that uses parameter decorators to build endpoints. For example, you write code like:
 
+=== "FastAPI"
 ```python
 from fastapi import FastAPI
 app = FastAPI()
@@ -82,10 +89,10 @@ app = FastAPI()
 def read_user(item_id: int):
   ...
 ```
+
 Here, FastAPI uses the function signature (e.g., item_id, q) to parse incoming requests, inject them as arguments, and produce a server response.
 
-PomdAPI, by contrast, does the client-side inverse. You define a function that takes parameters (like item_id, q), and the library uses them to build the outgoing request to a server. For example:
-
+=== "PomdAPI"
 ```python
 from pomdapi.api.http import HttpApi
 
@@ -98,7 +105,10 @@ def get_item(item_id: str, q: str | None = None):
         url="/items/{item_id}",
     )
   )
+
 ```
+PomdAPI, by contrast, does the client-side inverse. You define a function that takes parameters (like item_id, q), and the library uses them to build the outgoing request to a server
+
 |   | FastAPI (Server) | PomdAPI (Client) |
 |---|---|---|
 | **What it does?** | Exposes a path like /items/{item_id}. The function runs when that path is requested. | Parametrizes a client call to that path (or another remote service). The function returns a “request definition” that includes how to fetch or mutate data. |
@@ -106,30 +116,6 @@ def get_item(item_id: str, q: str | None = None):
 | **Result** | A server-side function that runs for incoming requests. | A client-side function that makes requests to a remote server, with caching and tagging built-in. |
 
 
-
-
-Key Features
-
-    Request Lifecycle Management
-    Handle the lifecycle of requests with minimal boilerplate—track loading states, catch errors, and refetch data as needed.
-
-    Cache Invalidation
-    Automatically (or manually) invalidate cache entries when you perform state-changing operations, so your application is always up to date.
-
-    Optimistic Updates
-    Implement patterns like "optimistic UI", where you update your local state immediately for a snappy UI, then roll back if the server update fails.
-
-    Expandable Architecture
-    Extend the library’s approach to new protocols or custom caching strategies if needed, thanks to well-defined interfaces and protocols in the core.
-
-Putting It All Together
-
-At a high level, you create a new Api (for instance, an HttpApi) by providing:
-
-    A base query configuration (e.g., endpoint URLs or default headers).
-    Optional cache configuration (like an in-memory or Memcached backend).
-    Define queries (for reads) and mutations (for writes) with decorators that specify the request details and expected response types.
-    Call these query/mutation endpoints in your code (synchronously or asynchronously), and let the library handle request logic, caching, and invalidation.
 
 Conclusion
 

@@ -97,7 +97,7 @@ def is_base_query_fn_async_arity_2(
 ) -> TypeIs[
     BaseQueryFnAsyncArity2[BaseQueryConfig, EndpointDefinitionGen, TResponse]
 ]:
-    return isinstance(fn, Callable) and len(inspect.signature(fn).parameters) == 3
+    return isinstance(fn, Callable) and len(inspect.signature(fn).parameters) == 2
 
 
 @dataclass

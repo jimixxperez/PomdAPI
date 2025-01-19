@@ -1,5 +1,5 @@
 # Core Types
 
-::: core.types
+::: pomdapi.core.types
     handler: python
 

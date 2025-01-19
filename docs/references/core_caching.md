@@ -1,5 +1,5 @@
 # Core Caching
 
-::: core.caching
+::: pomdapi.core.caching
     handler: python
 

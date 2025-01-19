@@ -1,17 +1,59 @@
-site_name: "papperlapi"
+site_name: "PomdAPI"
 repo_url: "https://github.com/YourGitHubUserName/papperlapi"
 
 theme:
   name: material
-  highlightjs: true
+  logo: /home/jeremy/Downloads/
+  palette:
+    scheme: default
+    primary: "#E63946"       # Pomegranate Red
+    accent: "#A8DADC"        # Soft Teal
+  repo_name: pydantic/pydantic
+  repo_url: https://github.com/pydantic/pydantic
+  # Advanced color overrides
+  # NOTE: this requires mkdocs-material advanced color support
+  # see https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors
+  features:
+    - content.code.copy
+  custom_colors:
+    primary: "#E63946"
+    accent: "#A8DADC"
+    scheme:
+      background: "#F9FAFB"
+      surface: "#F5F7F8"
+      on_surface: "#2D2D2D"
+      on_background: "#2D2D2D"
+
 
 extra_css:
   - css/papperlapi_custom.css
 
 markdown_extensions:
 - admonition
+- tables
+- admonition
+- attr_list
+- md_in_html
 - toc:
     permalink: true
+- pymdownx.highlight:
+    use_pygments: true
+    anchor_linenums: true
+    line_spans: __span
+    pygments_style: monokai
+- pymdownx.details
+- pymdownx.caret
+- pymdownx.critic
+- pymdownx.mark
+- pymdownx.superfences
+- pymdownx.snippets
+- pymdownx.tilde
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+
 
 plugins:
   - search
@@ -20,7 +62,7 @@ plugins:
         python:
           # By default, mkdocstrings will look for Python files in your project.
           # If your source code is in a subdirectory, you can specify that path here.
-          paths: ["."]
+          paths: ["./src"]
           # You can also use these lines to ensure your modules are importable
           # setup_commands:
           #   - import sys
@@ -28,8 +70,9 @@ plugins:
 #   
 
 nav:
-  - Home: index.md
-  - Getting Started: getting-started.md
+  - Introduction: index.md
+  - getting-started.md
+  - help.md
   - Python API Reference:
       - Core:
           - API: references/core_api.md
