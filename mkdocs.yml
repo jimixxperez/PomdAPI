@@ -73,7 +73,7 @@ nav:
   - Introduction: index.md
   - getting-started.md
   - help.md
-  - Python API Reference:
+  - API Reference:
       - Core:
           - API: references/core_api.md
           - Caching: references/core_caching.md
