@@ -7,7 +7,7 @@ This guide will help you get started with the API library.
 First, install the package using pip:
 
 ```bash
-pip install papperlapi 
+pip install pomdapi 
 ```
 
 ## Basic Usage
@@ -78,11 +78,11 @@ def get_users():
 ```python
 @api.mutation("createUser", response_type=User)
 def create_user(name: str, email: str):
-    return {
-        "path": "/users",
-        "method": "POST",
-        "body": {"name": name, "email": email}
-    }
+    return RequestDefinition(
+        path="/users",
+        method="POST",
+        body={"name": name, "email": email},
+    )
 ```
 
 ### Adding Caching

@@ -2,9 +2,8 @@ import os
 from typing import Literal
 from pydantic import BaseModel
 from pomdapi.core.types import Tag
-from pomdapi.api.http import HttpApi, RequestDefinition
+from pomdapi.api.http import HttpApi, RequestDefinition, BaseQueryConfig
 from pomdapi.cache.in_memory import InMemoryCache
-from pomdapi.core.types import BaseQueryConfig
 
 GITHUB_BASE_URL = "https://api.github.com"
 GITHUB_TOKEN =   os.environ["GITHUB_TOKEN"]
@@ -42,7 +41,7 @@ def get_repo_issues(owner: str, repo: str, state: str = "open"):
     return (
         RequestDefinition(
             method="GET",
-            url=f"/repos/{owner}/{repo}/issues?state={state}",
+            path=f"/repos/{owner}/{repo}/issues?state={state}",
         ),
         Tag(type="Issue", id="LIST"),  # Represent the entire list of issues
     )
@@ -118,7 +117,7 @@ def update_issue(
     return (
         RequestDefinition(
             method="PATCH",
-            url=f"/repos/{owner}/{repo}/issues/{issue_number}",
+            path=f"/repos/{owner}/{repo}/issues/{issue_number}",
             body=update_data.model_dump(exclude_none=True),
         ),
         Tag(type="Issue", id=str(issue_number)),
@@ -138,7 +137,7 @@ def lock_issue(owner: str, repo: str, issue_number: int):
     return (
         RequestDefinition(
             method="PUT",
-            url=f"/repos/{owner}/{repo}/issues/{issue_number}/lock",
+            path=f"/repos/{owner}/{repo}/issues/{issue_number}/lock",
         ),
         (
             Tag(type="Issue", id=str(issue_number)),
@@ -154,18 +153,18 @@ if __name__ == "__main__":
      - Locking/deleting an issue might invalidate both the single-issue tag and the 'LIST.'
     """)
     print("Synchronous usage")
-    open_issues = get_repo_issues(is_async=False, owner="octocat", repo="Hello-World")
-    first_issue = get_repo_issue(is_async=False, owner="octocat", repo="Hello-World", issue_number=1)
+    open_issues = get_repo_issues(is_async=False, owner="jimixxperez", repo="expert-meme")
+    first_issue = get_repo_issue(is_async=False, owner="jimixxperez", repo="expert-meme", issue_number=1)
     print(f"first issue: {first_issue}")
     # This will not refetch the issue, but will return the cached version
-    first_issue = get_repo_issue(is_async=False, owner="octocat", repo="Hello-World", issue_number=1)
+    first_issue = get_repo_issue(is_async=False, owner="jimixxperez", repo="expert-meme", issue_number=1)
 
     print("Mutation example")
     new_issue = create_issue(
         is_async=False,
-        owner="octocat",
-        repo="Hello-World",
-        issue_data=CreateIssueRequest(title="New Issue from Python", body="Hello from my script", assignees=["octocat"]),
+        owner="jimixxperez",
+        repo="expert-meme",
+        issue_data=CreateIssueRequest(title="New Issue from Python", body="Hello from my script", assignees=["jimixxperez"]),
     )
     print(f"new issue: {new_issue}")
 
@@ -175,8 +174,8 @@ if __name__ == "__main__":
     async def main():
         await update_issue(
             is_async=True,
-            owner="octocat",
-            repo="Hello-World",
+            owner="jimixxperez",
+            repo="expert-meme",
             issue_number=new_issue.number,
             update_data=UpdateIssueRequest(state="closed")
         )
@@ -184,8 +183,8 @@ if __name__ == "__main__":
         print("note that we are calling the same function again, but this time with `is_async=True`")
         new_updated_issue = await get_repo_issue(
             is_async=True, 
-            owner="octocat", 
-            repo="Hello-World", 
+            owner="jimixxperez", 
+            repo="expert-meme", 
             issue_number=new_issue.number,
         )
         print("Updated Issue:", new_updated_issue)

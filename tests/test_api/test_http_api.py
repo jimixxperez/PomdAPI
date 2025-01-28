@@ -25,7 +25,7 @@ def test_http_api_query_decorator(endpoint_name: str, response_type: type):
     def test_query(param: str) -> RequestDefinition:
         return RequestDefinition(
             method="GET",
-            url=f"/test/{param}"
+            path=f"/test/{param}"
         )
     
     assert endpoint_name in api.endpoints
