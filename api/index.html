@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="../hands-on-overview/">
+      
+      
+        <link rel="next" href="../references/core_api/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -16,7 +20,7 @@
     
     
       
-        <title>Install - PomdAPI</title>
+        <title>Api - PomdAPI</title>
       
     
     
@@ -70,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#api" class="md-skip">
           Skip to content
         </a>
       
@@ -105,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Install
+              Api
             
           </span>
         </div>
@@ -278,17 +282,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -302,7 +308,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Documentation
@@ -313,10 +319,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../api/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Api
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -325,6 +351,68 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-api-class-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. The Api class (Core)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The Api class (Core)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-generic-type-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Generic Type Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-storing-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Storing Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -840,6 +928,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -848,11 +938,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#introduction" class="md-nav__link">
     <span class="md-ellipsis">
-      Installation
+      Introduction
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-api-class-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. The Api class (Core)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The Api class (Core)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-generic-type-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Generic Type Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-storing-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Storing Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -874,11 +997,64 @@
   
 
 
-  <h1>Install</h1>
-
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip/uv-add<span class="w"> </span>pomdapi
+<h1 id="api">Api<a class="headerlink" href="#api" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>In pomdapi, the <a href="../references/api_http/"><code>Api</code></a> class is the foundation for defining and calling endpoints. It can be extended to build Api such the HttpApi.</p>
+<p>This document dissects the main concepts:</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Endpoint definition</strong></td>
+<td>Captures how your function transforms parameters into a request</td>
+</tr>
+<tr>
+<td><strong>BaseQueryConfig</strong></td>
+<td>holds global configuration for your API calls (e.g., a base URL or shared headers).</td>
+</tr>
+<tr>
+<td><strong>BaseQueryConfig</strong></td>
+<td>the low-level sync/async functions that actually peform the network operation</td>
+</tr>
+</tbody>
+</table>
+<p>Read on for deeper understanding of how these piece fit together.</p>
+<h2 id="1-the-api-class-core">1. The <code>Api</code> class (Core)<a class="headerlink" href="#1-the-api-class-core" title="Permanent link">&para;</a></h2>
+<h3 id="11-generic-type-parameters">1.1 Generic Type Parameters<a class="headerlink" href="#11-generic-type-parameters" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@datclass</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Api</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">RequestDefinitionGen</span><span class="p">,</span> <span class="n">BaseQueryConfig</span><span class="p">,</span> <span class="n">TResponse</span><span class="p">]):</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="o">...</span>
 </span></code></pre></div>
+<ol>
+<li>
+<p><strong>EndpointDefinitionGen</strong>: The shape or structure your endpoint returns. For an HTTP API, this is a RequestDefinition (i.e., which method, path, body, headers).</p>
+</li>
+<li>
+<p><strong>BaseQueryConfig</strong>: A configuration object that’s available to all endpoints. For HTTP, this might store the base_url or a function to prepare headers.</p>
+</li>
+<li>
+<p><strong>TResponse</strong> : The type your endpoint’s responses will produce.</p>
+</li>
+</ol>
+<p>The <code>Api</code> class uses these generics to remain flexible: it doesn’t know or care how you’ll do your network calls—it only provides the structure for defining endpoints and optionally caching responses.</p>
+<h3 id="12-storing-endpoints">1.2 Storing Endpoints<a class="headerlink" href="#12-storing-endpoints" title="Permanent link">&para;</a></h3>
+<p>The <code>Api</code> class has a dictionary:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">endpoints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EndpointDefinition</span><span class="p">[</span><span class="n">EndpointDefinitionGen</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+</span></code></pre></div>
+<ul>
+<li>each endpoint is keyed by name (e.g., "getRepoIssue")</li>
+<li>the value is an <code>EndpointDefinition</code>, which includes:<ul>
+<li><code>request_fn</code>: The user's decorated fucntion that builds a RequestDefinition</li>
+<li><code>is_query_endpoint</code>: a flag inidcation query vs mutation
+```</li>
+</ul>
+</li>
+</ul>
 
 
 
