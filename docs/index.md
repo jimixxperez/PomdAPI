@@ -1,14 +1,9 @@
 # Introduction
 
 ## PomdAPI 
-**PomdAPI** is a Python library built to bring a **FastAPI-style** developer experience to creating strongly-typed API clients. 
+PomdAPI is a Python library that brings a FastAPI-style developer experience to strongly-typed API clients. Inspired by FastAPI’s clarity, we needed a way to define multi-protocol API calls—HTTP, JSON-RPC, XML-RPC—without getting tangled in repetitive boilerplate.
 
-We love the clarity and ergonomics FastAPI introduced for web apps, especially with its Pydantic-based approach. But when we needed a similar, no-nonsense way to define and manage multi-protocol API calls—HTTP, JSON-RPC, XML-RPC—we couldn’t find anything that “just worked” without getting tangled in repetitive logic.
-
-So we built PomdAPI with one simple goal:
-
-deliver that same clean, efficient feeling to any kind of API interaction. Whether you prefer sync or async, need caching and invalidation, or want a clear, typed model for requests and responses, PomdAPI aims to make it all painless and Pythonic. We hope it becomes your go-to solution for taming multi-protocol APIs with minimal fuss.
-
+That’s why we built PomdAPI: a clean, typed approach for both sync and async calls, enhanced by tag-based caching and invalidation. If you want minimal fuss, typed models, and painless caching for your APIs, we hope PomdAPI becomes your go-to choice.
 ## Why use PomdAPI?
 
  🎯 <strong class="vertical-middle"> Declarative Endpoints</strong><br>
