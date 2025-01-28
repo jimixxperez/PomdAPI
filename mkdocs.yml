@@ -1,5 +1,6 @@
 site_name: "PomdAPI"
-repo_url: "https://github.com/YourGitHubUserName/papperlapi"
+repo_name: "jimixxperez/pomdapi"
+repo_url: "https://github.com/jimixxperez/pomdapi"
 
 theme:
   name: material
@@ -8,8 +9,6 @@ theme:
     scheme: default
     primary: "#E63946"       # Pomegranate Red
     accent: "#A8DADC"        # Soft Teal
-  repo_name: pydantic/pydantic
-  repo_url: https://github.com/pydantic/pydantic
   # Advanced color overrides
   # NOTE: this requires mkdocs-material advanced color support
   # see https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors
@@ -72,7 +71,9 @@ plugins:
 nav:
   - Introduction: index.md
   - getting-started.md
-  - help.md
+  - hands-on-overview.md
+  - Documentation:
+    - api.md
   - API Reference:
       - Core:
           - API: references/core_api.md

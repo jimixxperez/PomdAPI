@@ -63,7 +63,7 @@ def get_repo_issue(owner: str, repo: str, issue_number: int):
     return (
         RequestDefinition(
             method="GET",
-            url=f"/repos/{owner}/{repo}/issues/{issue_number}",
+            path=f"/repos/{owner}/{repo}/issues/{issue_number}",
         ),
         Tag(type="Issue", id=str(issue_number)),
     )
@@ -91,7 +91,7 @@ def create_issue(owner: str, repo: str, issue_data: CreateIssueRequest):
     return (
         RequestDefinition(
             method="POST",
-            url=f"/repos/{owner}/{repo}/issues",
+            path=f"/repos/{owner}/{repo}/issues",
             body=issue_data.model_dump(exclude_none=True),
         ),
         Tag(type="Issue", id="LIST"),  # Invalidate the issues list

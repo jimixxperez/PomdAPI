@@ -11,9 +11,9 @@ RequestDefinition: TypeAlias = dict[str, Any] | list[Any]
 
 
 class BaseQueryConfig(BaseModel):
-    """Defines the base configuration for all API requests."""
+    """Defines the base configuration for all JSON RPC API requests."""
 
-    base_url: HttpUrl
+    base_url: str
 
 
 JSONRPCId: TypeAlias = Optional[str | int]

@@ -1,28 +1,71 @@
 import httpx
+import urllib.parse
 
 from dataclasses import dataclass, field
-from typing import Optional, Any, Literal
+from typing import Callable, Optional, Any, Literal
 from pomdapi.core.api import Api
 from pomdapi.core.caching import Cache
-from pomdapi.core.types import BaseQueryConfig
 
 
 @dataclass
 class RequestDefinition:
-    """Defines a request for the API."""
+    """Defines a request for the API.
+    
+    Attributes:
+        method: The HTTP method for the request.
+        path: The path for the request.
+        body: The request body.
+        headers: The request headers.
+    example:
+        ```python
+        RequestDefinition(
+            method="GET",
+            path="/users",
+            headers={"Authorization": "Bearer <token>"}
+        )
+        ```
+    """
 
-    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
-    url: str
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"] = field()
+    path: str
     body: Any = None
     headers: dict[str, str] = field(default_factory=dict)
+
+@dataclass
+class BaseQueryConfig:
+    """Defines the base configuration for all API requests.
+    
+    This class holds common configuration that applies to all requests made through
+    the API, such as base URL and header preparation.
+
+    Attributes:
+        base_url: The base URL for all API requests. If provided, this will be
+                 prepended to all request paths.
+        prepare_headers: A callable that takes and returns a headers dictionary.
+                       Use this to add authentication, content-type, or other
+                       headers to all requests.
+
+    Example:
+        ```python
+        config = BaseQueryConfig(
+            base_url="https://api.example.com/v1",
+            prepare_headers=lambda headers: {
+                **headers,
+                "Authorization": f"Bearer {token}"
+            }
+        )
+        ```
+    """
+    base_url: str 
+    prepare_headers: Callable[[dict[str, str]], dict[str, str]] = field(
+        default_factory=lambda: lambda header: header
+    )
+
 
 
 def base_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any:
     # Prepare the final URL. If it's relative, prepend base_url.
-    if config.base_url and not req.url.startswith("http"):
-        req_url = f"{config.base_url}{req.url}"
-    else:
-        req_url = req.url
+    url = urllib.parse.urljoin(base=config.base_url, url=req.path)
 
     prepared_headers = (
         config.prepare_headers(req.headers) if config.prepare_headers else req.headers
@@ -30,7 +73,7 @@ def base_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any:
 
     response = httpx.request(
         method=req.method,
-        url=req_url,
+        url=url,
         json=req.body,
         headers=prepared_headers,
     )
@@ -39,11 +82,7 @@ def base_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any:
 
 
 async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any:
-    # Prepare the final URL. If it's relative, prepend base_url.
-    if config.base_url and not req.url.startswith("http"):
-        req_url = f"{config.base_url}{req.url}"
-    else:
-        req_url = req.url
+    url = urllib.parse.urljoin(base=config.base_url, url=req.path)
 
     prepared_headers = (
         config.prepare_headers(req.headers) if config.prepare_headers else req.headers
@@ -52,7 +91,7 @@ async def abase_query_fn(config: BaseQueryConfig, req: RequestDefinition) -> Any
     async with httpx.AsyncClient() as client:
         request = client.build_request(
             method=req.method,
-            url=req_url,
+            url=url,
             json=req.body,
             headers=prepared_headers,
         )
