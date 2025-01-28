@@ -14,27 +14,24 @@ deliver that same clean, efficient feeling to any kind of API interaction. Wheth
  🎯 <strong class="vertical-middle"> Declarative Endpoints</strong><br>
 Define your queries and mutations in a single, clear place using decorators. This means you can outline how to fetch or update data—whether it’s GitHub issues or Ethereum balances—without repeating request logic.
 
-🚀 <strong class="vertical-middle"> Pluggable Protocols</strong><br>
+🚀 <strong class="vertical-middle"> Expandable Architecture</strong><br>
 Enjoy out-of-the-box support for HTTP, JSON-RPC, and XML-RPC calls, with a straightforward pattern for adding any custom protocol. All protocols share the same consistent API interface, so you can reuse logic and tooling across diverse data sources.
 
-🔒 <strong class="vertical-middle"> Built-In Caching</strong><br>
-Built with Python type hints and Pydantic models, giving you both compile-time checks and runtime validation. This helps prevent bugs and ensures predictable data structures across your codebase.
+🔒 <strong class="vertical-middle"> Type safe</strong><br>
+Built with Python type hints (Generics) and Pydantic models, giving you both static time checks and runtime validation. This helps prevent bugs and ensures predictable data structures across your codebase.
 
 ⚡ <strong class="vertical-middle"> Automatic Sync/Async</strong><br>
 Use the same function in synchronous or asynchronous contexts—no code duplication necessary. Whether you’re in a simple script or an async-based web framework, the library adapts seamlessly.
 
 🔖 <strong class="vertical-middle"> Tag-Based Invalidation</strong><br>
 Speed up your application by reducing unnecessary requests and handling partial data updates. Choose from in-memory, Memcached, Redis, or implement your own custom caching backend.
-
-🔖 <strong class="vertical-middle"> Expandable Architecture</strong><br>
-Assign tags to endpoints, then invalidate entire lists or single items by tag. This makes cache updates straightforward and more maintainable for dynamic data.
-
+![overview](./overview.png)
 Whether you’re building a small prototype or a large-scale service, these features help keep your code clean, consistent, and reliable. For more hands-on guides, check out our Getting Started page or explore the Examples of how you can integrate PomdAPI into real-world projects.
 
 To learn more about each feature, check out our [Features](features.md) page or dive straight into the [Getting Started](getting-started.md) guide.
 
 
-## Quick Start
+## Example
 
 !!! example "In Beta"
     PomdAPI is in early beta, the API might be still subject to change.
@@ -62,17 +59,29 @@ def get_user_profile(user_id: str):
     return RequestDefinition(
         method="GET",
         url=f"/users/{user_id}"
-    )
+    ), Tag("userProfile", id=user_id)
+
+
+@api.mutate("updateUserProfile")
+def change_user_name(user_id: str, name: str):
+    return RequestDefinition(
+        method="PATCH",
+        url=f"/users/{user_id}",
+        body={"name": name}
+    ), Tag("userProfile", id=user_id) 
 
 
 # Use the function in the default async context
 async def main():
     profile = await get_user_profile(user_id="123") 
-    print(profile)
 
 # or in a sync context
 def main():
     profile = get_user_profile(is_async=False, user_id="123")
+    # Invalidate the userProfile tag
+    change_user_name(is_async=False, user_id="123", name="New Name")
+    # Need to refetch the userProfile
+    get_user_profile(is_async=False, user_id="123")
     print(profile)
 ```
 
