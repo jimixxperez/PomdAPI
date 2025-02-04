@@ -1,6 +1,8 @@
 # Introduction
-## PomdAPI 
+
 [Official Documentation](https://jimixxperez.github.io/PomdAPI/)
+
+## PomdAPI 
 **PomdAPI** is a Python library that brings a FastAPI-style developer experience to strongly-typed API clients. Inspired by FastAPI’s clarity, we needed a way to define multi-protocol API calls—HTTP, JSON-RPC, XML-RPC—without getting tangled in repetitive boilerplate.
 
 That’s why we built PomdAPI: 
